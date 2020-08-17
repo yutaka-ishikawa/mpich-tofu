@@ -16,7 +16,7 @@ case `hostname` in
 	export LD=/opt/FJSVxos/devkit/aarch64/bin/aarch64-linux-gnu-ld
 	export LDFLAGS="-L$LD_LIBRARY_PATH -L/opt/FJSVxos/devkit/aarch64/rfs/usr/lib64"
 	XX_CONF_HOST=--host=aarch64-linux-gnu
-	export LIBS="-ltofutop -ltofucom -ldl"
+	export LIBS="-ltofutop -ltofucom -ldl -lutf"
 	export CPPFLAGS="-I/opt/FJSVxos/devkit/aarch64/rfs/usr/include/FJSVtcs/ple/"
 	export CFLAGS="-O3 -g -DUTF_TIMER"
 	CONFIG_OPTIONS="--disable-psm \

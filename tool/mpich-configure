@@ -11,7 +11,7 @@ export LIBS="-ldl -lrt -ltofutop -ltofucom -lpmix -lfabric"
 ###export LIBS="-ldl -lrt -ltofutop -ltofucom -lpmix-wrap -lfabric"
 case `hostname` in
     fn01sv*|ea-login01)
-	export LIBS="-ldl -lrt -ltofutop -ltofucom -lpmix -lfabric"
+	export LIBS="-ldl -lrt -ltofutop -ltofucom -lpmix -lfabric -lutf"
 	export CC=/opt/FJSVxos/devkit/aarch64/bin/aarch64-linux-gnu-gcc
 	export CXX=/opt/FJSVxos/devkit/aarch64/bin/aarch64-linux-gnu-g++
 	export LD=/opt/FJSVxos/devkit/aarch64/bin/aarch64-linux-gnu-ld
