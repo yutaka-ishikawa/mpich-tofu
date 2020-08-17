@@ -1,0 +1,160 @@
+#!/bin/bash
+#
+#
+OPTION=$1
+DIR=$2
+INSTDIR=${DIR:-$HOME/mpich-tofu-fast}
+PMIX_INSTDIR=${DIR:-$HOME/mpich-tofu}
+LIBFABRIC_INSTDIR=${DIR:-$HOME/mpich-tofu}
+MPICH_SRC=./mpich-fast
+LOGDIR=log
+CUR_DIR=`pwd`
+##export LD_LIBRARY_PATH=$PMIX_INSTDIR/lib:$LD_LIBRARY_PATH
+
+if [ -z "$OPTION" ]; then
+OPTION=perf
+fi
+
+case `hostname` in
+    fn01sv*|ea-login01)
+	export CC=/opt/FJSVxos/devkit/aarch64/bin/aarch64-linux-gnu-gcc
+	export CXX=/opt/FJSVxos/devkit/aarch64/bin/aarch64-linux-gnu-g++
+	export LD=/opt/FJSVxos/devkit/aarch64/bin/aarch64-linux-gnu-ld
+	export CPPFLAGS=-I/opt/FJSVxos/devkit/aarch64/rfs/usr/include/FJSVtcs/ple
+	export FC=frtpx
+	export F77=frtpx
+	XX_CONF_CROSS="--with-cross=../tool/fugaku-mpich-f77-cross"
+	XX_CONF_HOST=--host=aarch64-linux-gnu
+	XX_CONF_PMIX="--with-pmix=/opt/FJSVxos/devkit/aarch64/rfs/usr/lib/FJSVtcs/ple/lib64 --with-pmix-include=/opt/FJSVxos/devkit/aarch64/rfs/usr/include/FJSVtcs/ple --with-pm=no";;
+    fh01p04)
+	GCC_HOME=/opt/FJSVXosDevkit/sparc64fx/V02L01E07
+	export CC=$GCC_HOME/bin/gccpx
+	export LD=$GCC_HOME/bin/ldpx
+	export LDFLAGS="-shared-libgcc -L/opt/FJSVpxtof/sparc64fx/lib64 -L$LD_LIBRARY_PATH"
+	XX_CONF_HOST=--host=sparc64-unknown-linux-gnu
+	XX_CONF_CROSS="--with-cross=../tool/fugaku-mpich-f77-cross"
+	XX_CONF_PMIX="--with-pmix=$PMIX_INSTDIR --with-pm=no";;
+    *)
+	export CC=gcc
+	export LD=ld
+	export LDFLAGS="-Wl,-rpath -Wl,$LD_LIBRARY_PATH"
+	XX_CONF_HOST=
+	XX_CONF_CROSS=
+	XX_CONF_PMIX="--with-pmix=$INSTDIR --with-pm=no";;
+esac
+
+echo CC=$CC
+echo LD=$LD
+echo LDFLAGS=$LDFLAGS
+echo LD_LIBRARY_PATH=$LD_LIBRARY_PATH
+echo INSTDIR=$INSTDIR
+echo LIBS=$LIBS
+
+if [ ! -d $LOGDIR ]; then
+    mkdir $LOGDIR
+fi
+
+# debug|perf|perf-hack
+case $OPTION in
+    debug)
+	echo "DEBUG MODE"
+	XX_CONF_PERF_ARGS=" \
+		--enable-error-checking=all \
+		--enable-error-messages=all \
+		--enable-g=all \
+		--enable-fast=O0 \
+		--enable-mpit-pvars=all \
+		--enable-timing=runtime \
+		--enable-threads=runtime \
+	"
+	;;
+    normal)
+	echo "NORMAL"
+	XX_CONF_PERF_ARGS=" \
+		--enable-error-checking=runtime \
+		--enable-error-messages=generic \
+		--enable-g=most \
+		--enable-fast=none \
+		--enable-mpit-pvars=all \
+		--enable-timing=runtime \
+		--enable-threads=runtime \
+	"
+	;;
+    perf|performance)
+	echo "PERFORMANCE"
+	XX_CONF_PERF_ARGS=" \
+		--enable-error-checking=no \
+		--enable-error-messages=generic \
+		--enable-g=none \
+		--enable-fast=all \
+		--enable-mpit-pvars=none \
+		--enable-timing=none \
+		--enable-threads=runtime \
+	"
+	;;
+    perf-hack)
+	echo "PERFORMANCE HACK"
+	XX_CONF_PERF_ARGS=" \
+		--enable-error-checking=no \
+		--enable-error-messages=none \
+		--enable-g=none \
+		--enable-fast=all \
+		--enable-mpit-pvars=none \
+		--enable-timing=none \
+		--enable-threads=runtime \
+	"
+	;;
+    *)
+	echo "DISABLE-FAST"
+	XX_CONF_PERF_ARGS="--disable-fast \
+		--enable-g=dbg,log \
+		--enable-debug \
+		--disable-direct \
+	"
+	;;
+esac
+
+# --disable-static
+
+which gcc
+date
+(cd $MPICH_SRC; export ac_cv_func_malloc_0_nonnull=yes; ./configure \
+	$XX_CONF_HOST \
+	$XX_CONF_CROSS \
+	--enable-threads=single \
+	--config-cache \
+	--prefix=${INSTDIR} \
+	--enable-shared \
+	\
+	--enable-fortran=no \
+	--enable-cxx=yes \
+	--enable-romio=yes \
+	\
+	--with-mpl-prefix=embedded \
+	--with-openpa-prefix=embedded \
+	--with-hwloc-prefix=embedded \
+	--with-device=ch4:ofi \
+	--enable-ch4-direct=netmod \
+	--with-wrapper-dl-type=none \
+	--with-libfabric-include=$CUR_DIR/libfabric/include	\
+ 	--with-libfabric-lib=$LIBFABRIC_INSTDIR/lib	\
+	\
+	$XX_CONF_PMIX \
+	$XX_CONF_PERF_ARGS \
+        \
+	MPICHLIB_CFLAGS=-O3 MPICHLIB_FFLAGS=-O3 MPICHLIB_CXXFLAGS=-O3 MPICHLIB_FCFLAGS="-g -O3" \
+        MPICH_MPICC_LIBS="-lpmix -ldl -lrt -ltofutop -ltofucom -lfabric" \
+        MPICH_MPICC_LDFLAGS="-L$INSTDIR/lib -L$LIBFABRIC_INSTDIR/lib" \
+	MPICH_MPICXX_LIBS="-lpmix -ldl -lrt -ltofutop -ltofucom -lfabric" \
+        MPICH_MPICXX_LDFLAGS="-L$INSTDIR/lib -L$LIBFABRIC_INSTDIR/lib" \
+	MPICH_MPIF77_LIBS="-lpmix -ldl -lrt -ltofutop -ltofucom -lfabric" \
+        MPICH_MPIF77_LDFLAGS="-L$INSTDIR/lib -L$LIBFABRIC_INSTDIR/lib" \
+	>../$LOGDIR/cnf-mpi-fast.txt)
+
+##	>../$LOGDIR/cnf-mpi-fast.txt 2>&1)
+
+date
+exit 0
+
+##	--with-libfabric=embedded \
+##

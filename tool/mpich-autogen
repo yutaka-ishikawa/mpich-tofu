@@ -1,0 +1,13 @@
+#!/bin/bash
+LOGDIR=log
+
+# For FX100
+if [ -f ${HOME}/Devtools/bin/automake ]; then
+export PATH=${HOME}/Devtools/bin:${PATH}
+fi
+
+if [ ! -d ${LOGDIR} ]; then
+    mkdir ${LOGDIR}
+fi
+
+cd mpich; sh autogen.sh >../${LOGDIR}/gen-mpi.txt 2>&1

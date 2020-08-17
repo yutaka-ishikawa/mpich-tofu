@@ -1,0 +1,47 @@
+#!/bin/bash
+DIR=$1
+INSTDIR=${DIR:-$HOME/mpich-tofu}
+LIBFABRIC_SRC=./libfabric
+LOGDIR=log
+
+CPPFLAGS="-I$INSTDIR/include"
+case `hostname` in
+    fh01p04)
+	XX_CONF_HOST=--host=sparc64-unknown-linux-gnu
+	GCC_HOME=/opt/FJSVXosDevkit/sparc64fx/V02L01E07
+	export CC=$GCC_HOME/bin/gccpx
+	export CPPFLAGS="-DFX100 -Iinclude -I../include"
+	export LD=$GCC_HOME/bin/ldpx
+	export LDFLAGS="-L${INSTDIR}/lib -shared-libgcc -L/opt/FJSVpxtof/sparc64fx/lib64"
+	export LIBS="-lutofu -ltofutop -ltofucom -ldl"
+	;;
+    fn01sv*)
+	XX_CONF_HOST=--host=aarch64-unknown-linux-gnu
+	export CC=/opt/FJSVxos/devkit/aarch64/bin/aarch64-linux-gnu-gcc
+	export LD=/opt/FJSVxos/devkit/aarch64/bin/aarch64-linux-gnu-ld
+	export CPPFLAGS="-Iinclude -I../include"
+	export LDFLAGS="-L${INSTDIR}/lib -L/opt/FJSVxos/devkit/aarch64/rfs/usr/lib64"
+	export LIBS="-lfabric -ltofutop -ltofucom -ldl"
+	;;
+    *)
+	export CC=gcc
+	export LD=ld
+	export CPPFLAGS="-Iinclude -I../include"
+	export LDFLAGS="-L${INSTDIR}/lib"
+	;;
+esac
+
+if [ ! -d $LOGDIR ]; then
+    mkdir $LOGDIR
+fi
+
+echo CPPFLAGS=$CPPFLAGS
+echo LDFLAGS=\"$LDFLAGS\"
+echo LIBS=$LIBS
+echo XX_CONF_HOST=$XX_CONF_HOST
+date
+(cd $LIBFABRIC_SRC/fabtests; ./configure \
+	$XX_CONF_HOST \
+	--prefix=$INSTDIR \
+	>../../$LOGDIR/cnf-fabtests.txt 2>&1)
+date
