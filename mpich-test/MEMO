@@ -1,0 +1,24 @@
+making binaries
+$ cd mpich/test/mpi/
+$ pushd dptools
+$ make
+edit ./src/libdtpools.la
+     #dependency_libs=' -L/home/users/ea01/ea0103/mpich-tofu//lib -lpmix /home/users/ea01/ea0103/mpich-tofu//lib/libfabric.la -L/opt/FJSVxos/devkit/aarch64/rfs/usr/lib64 -latomic -lrt -lpthread -ltofutop -ltofucom -ldl -lutf'
+     dependency_libs=' -L/home/users/ea01/ea0103/mpich-tofu//lib  /home/users/ea01/ea0103/mpich-tofu//lib/libfabric.la -L/opt/FJSVxos/devkit/aarch64/rfs/usr/lib64 -latomic -lrt -lpthread -ltofutop -ltofucom -ldl -lutf -lpmix'
+$ popd
+$ make
+--------------------------------------------------------------------------------------------------------------------
+
+
+export MPICH_ENABLE_CXX=no; export MPI_NO_SPAWN=yes; ./configure --host=aarch64-unknown-linux-gnu \
+	    --disable-cxx --disable-spawn --disable-romio --enable-fortran=no \
+	MPICC=$HOME/mpich-tofu/bin/mpicc \
+	MPICXX=$HOME/mpich-tofu/bin/mpicxx \
+
+runtests -batch -mpiexec=mpiexec -tests=testlist
+
+##	CC=/opt/FJSVxos/devkit/aarch64/bin/aarch64-linux-gnu-gcc \
+
+runtests -batch -mpiexec=~/run-mpichtest.sh -tests=testlist
+
+pjsub -L rscunit=rscunit_ft01,rscgrp=dvsin-r1,node=1,elapse=00:30:00 --interact --sparam wait-time=20

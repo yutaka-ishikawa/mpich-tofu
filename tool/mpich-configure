@@ -7,11 +7,11 @@ LOGDIR=log
 CUR_DIR=`pwd`
 export LD_LIBRARY_PATH=$INSTDIR/lib:$LD_LIBRARY_PATH
 
-export LIBS="-ldl -lrt -ltofutop -ltofucom -lpmix -lfabric"
+export LIBS="-ldl -lrt -lutf -ltofutop -ltofucom -lpmix -lfabric"
 ###export LIBS="-ldl -lrt -ltofutop -ltofucom -lpmix-wrap -lfabric"
 case `hostname` in
     fn01sv*|ea-login01)
-	export LIBS="-ldl -lrt -ltofutop -ltofucom -lpmix -lfabric -lutf"
+	export LIBS="-ldl -lrt -lutf -ltofutop -ltofucom -lpmix -lfabric"
 	export CC=/opt/FJSVxos/devkit/aarch64/bin/aarch64-linux-gnu-gcc
 	export CXX=/opt/FJSVxos/devkit/aarch64/bin/aarch64-linux-gnu-g++
 	export LD=/opt/FJSVxos/devkit/aarch64/bin/aarch64-linux-gnu-ld
@@ -137,9 +137,9 @@ date
 	--enable-debug \
 	--disable-direct \
 	--with-wrapper-dl-type=none \
-	MPICHLIB_CFLAGS=-O3 MPICHLIB_FFLAGS=-O3 MPICHLIB_CXXFLAGS=-O3 MPICHLIB_FCFLAGS="-g -O1" MPICH_MPICC_LIBS="-lpmix -ldl -lrt -ltofutop -ltofucom -lfabric" \
-	MPICH_MPICXX_LIBS="-lpmix -ldl -lrt -ltofutop -ltofucom -lfabric" \
-	MPICH_MPIF77_LIBS="-lpmix -ldl -lrt -ltofutop -ltofucom -lfabric" \
+	MPICHLIB_CFLAGS=-O3 MPICHLIB_FFLAGS=-O3 MPICHLIB_CXXFLAGS=-O3 MPICHLIB_FCFLAGS="-g -O1" MPICH_MPICC_LIBS="-lutf -lpmix -ldl -lrt -ltofutop -ltofucom -lfabric" \
+	MPICH_MPICXX_LIBS="-lutf -lpmix -ldl -lrt -ltofutop -ltofucom -lfabric" \
+	MPICH_MPIF77_LIBS="-lutf -lpmix -ldl -lrt -ltofutop -ltofucom -lfabric" \
 	>../$LOGDIR/cnf-mpi.txt 2>&1)
 
 #(cd ${MPICH_SRC}; make clean >/dev/null)
