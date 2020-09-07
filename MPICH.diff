@@ -1,0 +1,73 @@
+diff --git a/src/mpid/ch4/netmod/ofi/ofi_rma.h b/src/mpid/ch4/netmod/ofi/ofi_rma.h
+index ec6231f..bf67b35 100644
+--- a/src/mpid/ch4/netmod/ofi/ofi_rma.h
++++ b/src/mpid/ch4/netmod/ofi/ofi_rma.h
+@@ -419,9 +419,29 @@ static inline int MPIDI_OFI_do_put(const void *origin_addr,
+                                    (char *) win->base + offset, target_count, target_datatype);
+         goto null_op_exit;
+     }
+-
++#define TOFU
++    fprintf(stderr, "%s: YI$$$$$$$$$$ dest(%d) count(%d)\n", __func__, target_rank, target_count); fflush(stderr);
+     if (origin_contig && target_contig && (origin_bytes <= MPIDI_OFI_global.max_buffered_write)) {
+         MPIDI_OFI_win_cntr_incr(win);
++#ifdef TOFU
++        {
++            fprintf(stderr, "%s: YI####### fi_inject_write key(0x%lx) disp(0x%lx)\n",
++                    __func__, MPIDI_OFI_winfo_mr_key(win,target_rank),
++                    target_disp * MPIDI_OFI_winfo_disp_unit(win, target_rank) + target_true_lb);
++            MPIDI_OFI_CALL_RETRY(fi_inject_write(MPIDI_OFI_WIN(win).ep,                                 /* EP */
++                                                 (char *) origin_addr + origin_true_lb,                 /* buf */
++                                                 target_bytes,                                          /* len */
++                                                 MPIDI_OFI_av_to_phys(addr),                            /* dst rank */
++                                                 (uint64_t) MPIDI_OFI_winfo_base(win, target_rank)
++                                                 + target_disp * MPIDI_OFI_winfo_disp_unit(win,
++                                                                                           target_rank)
++                                                 + target_true_lb,                                      /* dst addr */
++                                                 MPIDI_OFI_winfo_mr_key(win,target_rank)
++                                                 + target_disp * MPIDI_OFI_winfo_disp_unit(win, target_rank)
++                                                 + target_true_lb),                                     /* dst key */
++                                 rdma_inject_write, FALSE);
++        }
++#else
+         MPIDI_OFI_CALL_RETRY(fi_inject_write(MPIDI_OFI_WIN(win).ep,
+                                              (char *) origin_addr + origin_true_lb, target_bytes,
+                                              MPIDI_OFI_av_to_phys(addr),
+@@ -431,6 +451,7 @@ static inline int MPIDI_OFI_do_put(const void *origin_addr,
+                                              + target_true_lb, MPIDI_OFI_winfo_mr_key(win,
+                                                                                       target_rank)),
+                              rdma_inject_write, FALSE);
++#endif /* TOFU */
+         goto null_op_exit;
+     } else if (origin_contig && target_contig) {
+         MPIDI_OFI_INIT_SIGNAL_REQUEST(win, sigreq, &flags);
+@@ -447,7 +468,13 @@ static inline int MPIDI_OFI_do_put(const void *origin_addr,
+         iov.iov_len = target_bytes;
+         riov.addr = (uint64_t) (MPIDI_OFI_winfo_base(win, target_rank) + offset + target_true_lb);
+         riov.len = target_bytes;
++#ifdef TOFU
++        fprintf(stderr, "%s: YI####### fi_writemsg key(0x%lx) disp(0x%lx)\n",
++                __func__, MPIDI_OFI_winfo_mr_key(win,target_rank),   offset + target_true_lb);
++        riov.key = MPIDI_OFI_winfo_mr_key(win, target_rank) + offset + target_true_lb;
++#else
+         riov.key = MPIDI_OFI_winfo_mr_key(win, target_rank);
++#endif /* TOFU */
+         MPIDI_OFI_INIT_CHUNK_CONTEXT(win, sigreq);
+         MPIDI_OFI_CALL_RETRY(fi_writemsg(MPIDI_OFI_WIN(win).ep, &msg, flags), rdma_write, FALSE);
+         goto fn_exit;
+@@ -542,6 +569,7 @@ static inline int MPIDI_NM_mpi_put(const void *origin_addr,
+         goto fn_exit;
+     }
+ 
++    fprintf(stderr, "%s: YI$$$$$$$$ calling MPIDI_OFI_do_put\n", __func__); fflush(stderr);
+     mpi_errno = MPIDI_OFI_do_put(origin_addr,
+                                  origin_count,
+                                  origin_datatype,
+@@ -748,6 +776,7 @@ static inline int MPIDI_NM_mpi_rput(const void *origin_addr,
+         goto fn_exit;
+     }
+ 
++    fprintf(stderr, "%s: YI$$$$$$$$ calling MPIDI_OFI_do_put\n", __func__); fflush(stderr);
+     mpi_errno = MPIDI_OFI_do_put((void *) origin_addr,
+                                  origin_count,
+                                  origin_datatype,
