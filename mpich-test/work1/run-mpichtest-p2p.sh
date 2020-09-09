@@ -8,8 +8,8 @@
 #PJM -o "./results/%n.%j.out"
 #PJM -e "./results/%n.%j.err"
 #
-#	PJM -L "node=12"
-#PJM -L "node=4"
+#	PJM -L "node=12:noncont"
+#PJM -L "node=4:noncont"
 #PJM --mpi "max-proc-per-node=4"
 #	PJM --mpi "max-proc-per-node=1"
 #	PJM -L "elapse=00:20:00"
@@ -17,7 +17,7 @@
 #	PJM -L "elapse=00:10:00"
 #	PJM -L "elapse=00:6:00"
 #	PJM -L "elapse=00:2:40"
-#PJM -L "elapse=00:0:4"
+#PJM -L "elapse=00:0:30"
 #	PJM -L "elapse=00:2:30"
 #PJM -L "rscunit=rscunit_ft02,rscgrp=dvsys-spack2,jobenv=linux"
 #	PJM -L "rscunit=rscunit_ft02,rscgrp=dvsys-mck2_and_spack2,jobenv=linux"
@@ -32,7 +32,6 @@ export MPIR_CVAR_OFI_USE_PROVIDER=tofu
 export MPICH_CH4_OFI_ENABLE_SCALABLE_ENDPOINTS=1
 export TEST_INSTDIR=../../mpich/test/mpi
 export MPIEXEC_TIMEOUT=180
-
 
 export TOFULOG_DIR=./results
 export UTF_MSGMODE=1	# Rendezous
@@ -61,10 +60,9 @@ echo "TOFU_DEBUG_FD  = " $TOFU_DEBUG_FD
 echo "TOFU_DEBUG_LVL = " $TOFU_DEBUG_LVL
 #cho "MPITEST        = " $MPITEST
 
-echo "# mpiexec -n 4    ./cxx/rma/winfencex "
-mpiexec -n 4    $TEST_INSTDIR/./cxx/rma/winfencex  
+echo "# mpiexec -n 2    ./errors/rma/cas_type_check "
+ mpiexec -n 2    $TEST_INSTDIR/./errors/rma/cas_type_check  
 echo $?
-
 exit
 
 #echo "# Something wrong needs to investigate mpiexec -n 2    ./errors/rma/win_sync_free_at "
