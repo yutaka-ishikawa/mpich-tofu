@@ -17,7 +17,10 @@ sh ./generate_run.sh -r perf >> tmp.$$
 sh ./generate_run.sh -r errors >> tmp.$$
 sh ./generate_run.sh -r impls >> tmp.$$
 
-awk -f SUMMARY.awk <tmp.$$ > summary-`date +%Y_%m_%d_%T`.csv
+###FNAME=summary-`date +%Y_%m_%d_%T`.csv
+FNAME=summary-`date +%Y-%m-%d_%k-%M-%S`.csv
+date > $FNAME
+awk -f SUMMARY.awk <tmp.$$ >> $FNAME
 
 rm tmp.$$
 exit 0
