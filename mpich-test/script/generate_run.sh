@@ -2,7 +2,7 @@
 
 TEST_DIR=${MPICH_TEST_DIR:-"$HOME/work/mpich-tofu/mpich-test"}
 SRC_DIR=${MPICH_TEST_SRC:-"$HOME/work/mpich-tofu/mpich/test/mpi"}
-INS_DIR=${MPICH_INS_DIR:-"$HOME/riken-mpich"}
+INS_DIR=${MPICH_INS_DIR:-"$HOME/work/mpich-tofu"}
 SINGLE_TIMELMT=${SINGLE_TIMEOUT:-"5m"}
 
 # Global Variables
@@ -220,11 +220,19 @@ gen_batch_script()
 #	PJM -L proc-core=unlimited
 #------- Program execution -------#
 
-#export LD_LIBRARY_PATH=\$HOME/${INS_DIR/$HOME\//}/lib:\$LD_LIBRARY_PATH
-#export MPIR_CVAR_OFI_USE_PROVIDER=tofu
-#export MPICH_CH4_OFI_ENABLE_SCALABLE_ENDPOINTS=1
-#export UTF_MSGMODE=1
+export LD_LIBRARY_PATH=\$HOME/${INS_DIR/$HOME\//}/lib:\$LD_LIBRARY_PATH
+export MPIR_CVAR_OFI_USE_PROVIDER=tofu
+export MPICH_CH4_OFI_ENABLE_SCALABLE_ENDPOINTS=1
+export MPIR_CVAR_ALLTOALL_SHORT_MSG_SIZE=2147483647 # 32768 in default (integer value)  
+export TOFU_NAMED_AV=1
+export UTF_MSGMODE=1
 #export TOFULOG_DIR=$result_dir
+
+echo "LD_LIBRARY_PATH=" $LD_LIBRARY_PATH
+echo "TOFU_NAMED_AV = " $TOFU_NAMED_AV
+echo "UTF_MSGMODE   = " $UTF_MSGMODE "(0: Eager, 1: Rendezous)"
+echo "UTF_TRANSMODE = " $UTF_TRANSMODE "(0: Chained, 1: Aggressive)"
+echo "MPIR_CVAR_ALLTOALL_SHORT_MSG_SIZE = " $MPIR_CVAR_ALLTOALL_SHORT_MSG_SIZE
 
 `find "${runlists_dir}" -name "runtests-*.batch" -exec echo "sh" {} \;`
 
@@ -280,10 +288,10 @@ process_result()
 		cat << EOF
 [FILENAME]: $each
 [TESTNAME]: $testname
-[NUMBER OF TESTS]: $test_num
+[NUM_TESTS]: $test_num
 [NUM_SUCCESS]: $success_num
 [NUM_FAILED]: $err_num
-[FAILED TESTS]: `echo ${failed_tests[@]}`
+[FAILED_TESTS]: `echo ${failed_tests[@]}`
 EOF
 	done
 }
