@@ -18,7 +18,7 @@ sh ./generate_run.sh -r errors >> tmp.$$
 sh ./generate_run.sh -r impls >> tmp.$$
 
 ###FNAME=summary-`date +%Y_%m_%d_%T`.csv
-FNAME=summary-`date +%Y-%m-%d_%k-%M-%S`.csv
+FNAME=summary-`date +%Y-%m-%d_%I-%M-%S`.csv
 date > $FNAME
 awk -f SUMMARY.awk <tmp.$$ >> $FNAME
 

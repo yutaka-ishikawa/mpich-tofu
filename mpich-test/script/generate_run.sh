@@ -217,7 +217,7 @@ gen_batch_script()
 #PJM -L "elapse=${timelmt}"
 #PJM -L "rscunit=rscunit_ft01,rscgrp=${rscgroup}"
 #	PJM -L "rscunit=rscunit_ft01,rscgrp=dvmck"
-#	PJM -L proc-core=unlimited
+#PJM -L proc-core=unlimited
 #------- Program execution -------#
 
 export LD_LIBRARY_PATH=\$HOME/${INS_DIR/$HOME\//}/lib:\$LD_LIBRARY_PATH
