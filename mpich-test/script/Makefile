@@ -6,5 +6,7 @@ summary:
 	sh SUMMARY.sh
 list:
 	sh CREATE_LIST.sh
-batch:
-	sh BATCH_CREATE.sh
+numazu-batch:
+	sh CREATE_BATCH.sh dvsys-spack2 rscunit_ft02
+fugaku-batch:
+	sh CREATE_BATCH.sh dvsys-sin rscunit_ft01

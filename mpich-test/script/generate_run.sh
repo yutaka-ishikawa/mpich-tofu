@@ -3,12 +3,13 @@
 TEST_DIR=${MPICH_TEST_DIR:-"$HOME/work/mpich-tofu/mpich-test"}
 SRC_DIR=${MPICH_TEST_SRC:-"$HOME/work/mpich-tofu/mpich/test/mpi"}
 INS_DIR=${MPICH_INS_DIR:-"$HOME/work/mpich-tofu"}
-SINGLE_TIMELMT=${SINGLE_TIMEOUT:-"5m"}
+SINGLE_TIMELMT=${SINGLE_TIMEOUT:-"30s"}	# 30 second
 
 # Global Variables
 default_test="all"
 default_timelmt="60m"
 default_rscgrp="dvall"
+default_rscunt="rscunit_ft01"
 
 usage()
 {
@@ -146,6 +147,7 @@ gen_batch_script()
 	local testname=${default_test}
 	local timelmt="${limit_hrs}:${limit_min}:${limit_sec}"
 	local rscgroup=${default_rscgrp}
+	local rscunit=${default_rscunt}
 	local option=
 
 	for option; do
@@ -163,6 +165,11 @@ gen_batch_script()
 			-r)
 				shift
 				rscgroup="$1"
+				shift
+				;;
+			-u)
+				shift
+				rscunit="$1"
 				shift
 				;;
 			-*)
@@ -213,9 +220,12 @@ gen_batch_script()
 #PJM -e "$result_dir/%n.%j.err"
 #
 #PJM -L "node=${np}"
+#	PJM -L "node=${np}:noncont"
 #PJM --mpi "max-proc-per-node=1"
+#	PJM --mpi "max-proc-per-node=4"
+#	PJM --mpi "max-proc-per-node=48"
 #PJM -L "elapse=${timelmt}"
-#PJM -L "rscunit=rscunit_ft01,rscgrp=${rscgroup}"
+#PJM -L "rscunit=${rscunit},rscgrp=${rscgroup}"
 #	PJM -L "rscunit=rscunit_ft01,rscgrp=dvmck"
 #PJM -L proc-core=unlimited
 #------- Program execution -------#
@@ -348,6 +358,7 @@ for opts in $@; do
 				fi
 				
 				rscgroup=${default_rscgrp}
+				rscunit=${default_rscunt}
 				parse_time ${default_timelmt}
 
 				for arg in ${subargs[@]}; do
@@ -356,6 +367,9 @@ for opts in $@; do
 					case $name in
 						r|res|resource)
 							rscgroup="$value"	
+							;;
+						t|unit)
+							rscunit="$value"	
 							;;
 						t|time)
 							parse_time "$value"
@@ -373,7 +387,7 @@ for opts in $@; do
 			      	echo -e "\e[1;32m[TIME LIMIT]:\e[0m$timelmt"
 				echo -e "\e[1;32m[RESOURCE GROUP]:\e[0m$rscgroup"
 				
-				gen_batch_script -n ${testname} -t ${timelmt} -r ${rscgroup}
+				gen_batch_script -n ${testname} -t ${timelmt} -r ${rscgroup} -u ${rscunit}
 			done
 			;;
 		-r|--report)
