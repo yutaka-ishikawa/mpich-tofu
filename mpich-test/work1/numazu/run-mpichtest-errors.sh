@@ -18,7 +18,7 @@
 #	PJM -L "elapse=00:10:00"
 #	PJM -L "elapse=00:6:00"
 #	PJM -L "elapse=00:2:40"
-#PJM -L "elapse=00:0:10"
+#PJM -L "elapse=00:0:20"
 #	PJM -L "elapse=00:2:30"
 #PJM -L "rscunit=rscunit_ft02,rscgrp=dvsys-spack2,jobenv=linux"
 #	PJM -L "rscunit=rscunit_ft02,rscgrp=dvsys-mck2_and_spack2,jobenv=linux"
@@ -61,6 +61,12 @@ echo "TOFU_DEBUG_FD  = " $TOFU_DEBUG_FD
 echo "TOFU_DEBUG_LVL = " $TOFU_DEBUG_LVL
 #cho "MPITEST        = " $MPITEST
 
-echo -e "[TESTNAME]: reducelength\n[OUTPUT]:" | tee -a /dev/stderr
-timeout --preserve-status -k 2 30s mpiexec -n 4    /home/users/ea01/ea0103/work/mpich-tofu/mpich/test/mpi/errors/coll/reducelength 
+
+echo -e "[TESTNAME]: scatterlength\n[OUTPUT]:" | tee -a /dev/stderr
+mpiexec -n 4    /home/users/ea01/ea0103/work/mpich-tofu/mpich/test/mpi/errors/coll/scatterlength 
 echo -e "[RETURN-VAL]: $?\n"
+wait
+
+#echo -e "[TESTNAME]: reducelength\n[OUTPUT]:" | tee -a /dev/stderr
+#timeout --preserve-status -k 2 30s mpiexec -n 4    /home/users/ea01/ea0103/work/mpich-tofu/mpich/test/mpi/errors/coll/reducelength 
+#echo -e "[RETURN-VAL]: $?\n"

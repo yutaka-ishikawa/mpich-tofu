@@ -1,3 +1,8 @@
+$ cd script
+$ sh ./generate_run.sh -l pt2pt
+$ sh ./generate_run.sh -l pt2pt
+
+
 making binaries
 $ cd mpich/test/mpi/
 $ pushd dptools

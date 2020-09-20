@@ -24,6 +24,7 @@ In the following each step, a log file is created under the log
 directory.  Please see it if some errors have been reported.
 $ ./tool/mpich-autogen
 $ ./tool/mpich-configure disable-fast /home/users/ea01/share/mpich-tofu/
+	# ./tool/mpich-configure disable-fast /home/users/ea01/ea0103/mpich-tofu/
 $ (cd mpich; make V=1 >& ../log/cmp-mpich.txt)
 $ (cd mpich; make install >& ../log/inst-mpich.txt)
 

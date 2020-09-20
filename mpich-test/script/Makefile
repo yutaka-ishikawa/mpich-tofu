@@ -1,3 +1,6 @@
+# The following tests will exit with errors
+#	errors/spawn/unpub, errors/spawn/lookup_name
+
 .PHONY: all
 
 all:
