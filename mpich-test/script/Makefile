@@ -6,7 +6,9 @@
 all:
 	@echo "make summary, make list, or make batch"
 summary:
-	sh SUMMARY.sh
+	unset MARKDOWN;	sh SUMMARY.sh
+summary-md:
+	export MARKDOWN=1; sh SUMMARY.sh
 list:
 	sh CREATE_LIST.sh
 numazu-batch:

@@ -2,7 +2,7 @@
 #
 #  pjsub -L rscunit=rscunit_ft01,rscgrp=dvint,jobenv=linux,node=12,elapse=00:30:00 --interact --sparam wait-time=20
 #------ pjsub option --------#
-#PJM -N "MPICH-TEST-P2P" # jobname
+#PJM -N "MPICH-TEST-COMM" # jobname
 #PJM -S		# output statistics
 #PJM --spath "./results/%n.%j.stat"
 #PJM -o "./results/%n.%j.out"
@@ -10,15 +10,16 @@
 #
 #	PJM -L "node=12:noncont"
 #PJM -L "node=4:noncont"
-#PJM --mpi "max-proc-per-node=4"
+#PJM --mpi "max-proc-per-node=48"
+#	PJM --mpi "max-proc-per-node=4"
 #	PJM --mpi "max-proc-per-node=1"
 #	PJM -L "elapse=00:20:00"
 #	PJM -L "elapse=00:30:00"
 #	PJM -L "elapse=00:10:00"
 #	PJM -L "elapse=00:6:00"
 #	PJM -L "elapse=00:2:40"
-#PJM -L "elapse=00:0:10"
-#	PJM -L "elapse=00:2:30"
+#	PJM -L "elapse=00:0:40"
+#PJM -L "elapse=00:2:30"
 #PJM -L "rscunit=rscunit_ft02,rscgrp=dvsys-spack2,jobenv=linux"
 #	PJM -L "rscunit=rscunit_ft02,rscgrp=dvsys-mck2_and_spack2,jobenv=linux"
 #	PJM -L "rscunit=rscunit_ft01,rscgrp=dvsin-r1"
@@ -60,8 +61,13 @@ echo "TOFU_DEBUG_FD  = " $TOFU_DEBUG_FD
 echo "TOFU_DEBUG_LVL = " $TOFU_DEBUG_LVL
 #cho "MPITEST        = " $MPITEST
 
-echo "# mpiexec -n 6    ./comm/comm_idup_iallreduce"
-mpiexec -n 6    $TEST_INSTDIR/./comm/comm_idup_iallreduce
-echo $?
+# IT's OK for timeout
+#echo -e "[TESTNAME]: ctxsplit\n[OUTPUT]:" | tee -a /dev/stderr
+#mpiexec -n 4    /home/users/ea01/ea0103/work/mpich-tofu/mpich/test/mpi/comm/ctxsplit
+#echo -e "[RETURN-VAL]: $?\n"
+
+#echo "# mpiexec -n 6    ./comm/comm_idup_iallreduce"
+#mpiexec -n 6    $TEST_INSTDIR/./comm/comm_idup_iallreduce
+#echo $?
 
 

@@ -22,7 +22,7 @@ run:
 	pjsub init/batch-scripts/run-mpichtest-*.sh 
 	pjsub mpi_t/batch-scripts/run-mpichtest-*.sh 
 	pjsub perf/batch-scripts/run-mpichtest-*.sh 
-##	pjsub rma/batch-scripts/run-mpichtest-*.sh 
+	pjsub rma/batch-scripts/run-mpichtest-*.sh 
 	pjsub topo/batch-scripts/run-mpichtest-*.sh 
 
 run-clean:
