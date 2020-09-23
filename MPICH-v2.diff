@@ -1,0 +1,188 @@
+diff --git a/src/mpid/ch4/netmod/ofi/ofi_rma.h b/src/mpid/ch4/netmod/ofi/ofi_rma.h
+index ec6231f..d3cb11d 100644
+--- a/src/mpid/ch4/netmod/ofi/ofi_rma.h
++++ b/src/mpid/ch4/netmod/ofi/ofi_rma.h
+@@ -419,9 +419,29 @@ static inline int MPIDI_OFI_do_put(const void *origin_addr,
+                                    (char *) win->base + offset, target_count, target_datatype);
+         goto null_op_exit;
+     }
+-
++#define TOFU
++    // fprintf(stderr, "%s: YI$$$$$$$$$$ dest(%d) count(%d)\n", __func__, target_rank, target_count); fflush(stderr);
+     if (origin_contig && target_contig && (origin_bytes <= MPIDI_OFI_global.max_buffered_write)) {
+         MPIDI_OFI_win_cntr_incr(win);
++#ifdef TOFU
++        {
++            // fprintf(stderr, "%s: YI####### fi_inject_write key(0x%lx) disp(0x%lx)\n",
++            //     __func__, MPIDI_OFI_winfo_mr_key(win,target_rank),
++            //      target_disp * MPIDI_OFI_winfo_disp_unit(win, target_rank) + target_true_lb);
++            MPIDI_OFI_CALL_RETRY(fi_inject_write(MPIDI_OFI_WIN(win).ep,                                 /* EP */
++                                                 (char *) origin_addr + origin_true_lb,                 /* buf */
++                                                 target_bytes,                                          /* len */
++                                                 MPIDI_OFI_av_to_phys(addr),                            /* dst rank */
++                                                 (uint64_t) MPIDI_OFI_winfo_base(win, target_rank)
++                                                 + target_disp * MPIDI_OFI_winfo_disp_unit(win,
++                                                                                           target_rank)
++                                                 + target_true_lb,                                      /* dst addr */
++                                                 MPIDI_OFI_winfo_mr_key(win,target_rank)
++                                                 + target_disp * MPIDI_OFI_winfo_disp_unit(win, target_rank)
++                                                 + target_true_lb),                                     /* dst key */
++                                 rdma_inject_write, FALSE);
++        }
++#else
+         MPIDI_OFI_CALL_RETRY(fi_inject_write(MPIDI_OFI_WIN(win).ep,
+                                              (char *) origin_addr + origin_true_lb, target_bytes,
+                                              MPIDI_OFI_av_to_phys(addr),
+@@ -431,6 +451,7 @@ static inline int MPIDI_OFI_do_put(const void *origin_addr,
+                                              + target_true_lb, MPIDI_OFI_winfo_mr_key(win,
+                                                                                       target_rank)),
+                              rdma_inject_write, FALSE);
++#endif /* TOFU */
+         goto null_op_exit;
+     } else if (origin_contig && target_contig) {
+         MPIDI_OFI_INIT_SIGNAL_REQUEST(win, sigreq, &flags);
+@@ -447,7 +468,13 @@ static inline int MPIDI_OFI_do_put(const void *origin_addr,
+         iov.iov_len = target_bytes;
+         riov.addr = (uint64_t) (MPIDI_OFI_winfo_base(win, target_rank) + offset + target_true_lb);
+         riov.len = target_bytes;
++#ifdef TOFU
++        // fprintf(stderr, "%s: YI####### fi_writemsg key(0x%lx) disp(0x%lx)\n",
++        //     __func__, MPIDI_OFI_winfo_mr_key(win,target_rank),   offset + target_true_lb);
++        riov.key = MPIDI_OFI_winfo_mr_key(win, target_rank) + offset + target_true_lb;
++#else
+         riov.key = MPIDI_OFI_winfo_mr_key(win, target_rank);
++#endif /* TOFU */
+         MPIDI_OFI_INIT_CHUNK_CONTEXT(win, sigreq);
+         MPIDI_OFI_CALL_RETRY(fi_writemsg(MPIDI_OFI_WIN(win).ep, &msg, flags), rdma_write, FALSE);
+         goto fn_exit;
+@@ -492,8 +519,19 @@ static inline int MPIDI_OFI_do_put(const void *origin_addr,
+ 
+         cur_o += oout;
+         cur_t += tout;
++#ifdef TOFU
++        // fprintf(stderr, "%s: YI$$$$$$ fi_writemsg offset(%ld) tout(%d) base(%p)\n", __func__, offset, tout,
++        //     MPIDI_OFI_winfo_base(win, req->target_rank));
++        for (i = 0; i < tout; i++) {
++            targetv[i].key = MPIDI_OFI_winfo_mr_key(win, target_rank)
++                + (targetv[i].addr - MPIDI_OFI_winfo_base(win, req->target_rank));
++            // fprintf(stderr, "%s:\t YI$$$$$$ NEW targetv[%d].key(%lx) targetv[%d].addr(%lx)\n",
++            //     __func__, i, targetv[i].key, i, targetv[i].addr);
++        }
++#else
+         for (i = 0; i < tout; i++)
+             targetv[i].key = MPIDI_OFI_winfo_mr_key(win, target_rank);
++#endif /* TOFU */
+         MPIR_Assert(rc != MPIDI_OFI_SEG_ERROR);
+         MPIDI_OFI_ASSERT_IOVEC_ALIGN(originv);
+         msg.msg_iov = originv;
+@@ -542,6 +580,7 @@ static inline int MPIDI_NM_mpi_put(const void *origin_addr,
+         goto fn_exit;
+     }
+ 
++    // fprintf(stderr, "%s: YI$$$$$$$$ calling MPIDI_OFI_do_put\n", __func__); fflush(stderr);
+     mpi_errno = MPIDI_OFI_do_put(origin_addr,
+                                  origin_count,
+                                  origin_datatype,
+@@ -621,7 +660,14 @@ static inline int MPIDI_OFI_do_get(void *origin_addr,
+         iov.iov_len = target_bytes;
+         riov.addr = (uint64_t) (MPIDI_OFI_winfo_base(win, target_rank) + offset + target_true_lb);
+         riov.len = target_bytes;
++#ifdef TOFU
++        fprintf(stderr, "%s: YI##(%d)##### fi_readmsg key(0x%lx) disp(0x%lx) base(0x%lx)\n",
++            __func__, __LINE__, MPIDI_OFI_winfo_mr_key(win, target_rank), offset + target_true_lb,
++            MPIDI_OFI_winfo_base(win, target_rank));
++        riov.key = MPIDI_OFI_winfo_mr_key(win, target_rank) + offset + target_true_lb;
++#else
+         riov.key = MPIDI_OFI_winfo_mr_key(win, target_rank);
++#endif /* TOFU */
+         MPIDI_OFI_INIT_CHUNK_CONTEXT(win, sigreq);
+         MPIDI_OFI_CALL_RETRY(fi_readmsg(MPIDI_OFI_WIN(win).ep, &msg, flags), rdma_write, FALSE);
+         goto fn_exit;
+@@ -668,8 +714,19 @@ static inline int MPIDI_OFI_do_get(void *origin_addr,
+         cur_t += tout;
+         MPIR_Assert(rc != MPIDI_OFI_SEG_ERROR);
+ 
++#ifdef TOFU
++        fprintf(stderr, "%s: YI$$(%d)$$$$ fi_readmsg offset(%ld) tout(%d) base(%p)\n", __func__, __LINE__, offset, tout,
++            MPIDI_OFI_winfo_base(win, req->target_rank));
++        for (i = 0; i < tout; i++) {
++            targetv[i].key = MPIDI_OFI_winfo_mr_key(win, target_rank)
++                + (targetv[i].addr - MPIDI_OFI_winfo_base(win, req->target_rank));
++            // fprintf(stderr, "%s:\t YI$$$$$$ NEW targetv[%d].key(%lx) targetv[%d].addr(%lx)\n",
++            //     __func__, i, targetv[i].key, i, targetv[i].addr);
++        }
++#else
+         for (i = 0; i < tout; i++)
+             targetv[i].key = MPIDI_OFI_winfo_mr_key(win, target_rank);
++#endif /* TOFU */
+ 
+         MPIDI_OFI_ASSERT_IOVEC_ALIGN(originv);
+         msg.msg_iov = originv;
+@@ -748,6 +805,7 @@ static inline int MPIDI_NM_mpi_rput(const void *origin_addr,
+         goto fn_exit;
+     }
+ 
++    // fprintf(stderr, "%s: YI$$$$$$$$ calling MPIDI_OFI_do_put\n", __func__); fflush(stderr);
+     mpi_errno = MPIDI_OFI_do_put((void *) origin_addr,
+                                  origin_count,
+                                  origin_datatype,
+@@ -1037,6 +1095,7 @@ static inline int MPIDI_OFI_do_get_accumulate(const void *origin_addr,
+     unsigned i;
+     MPIDI_OFI_seg_state_t p;
+ 
++    fprintf(stderr, "%s: YI-------- in %s\n", __func__, __FILE__);
+     MPIR_FUNC_VERBOSE_STATE_DECL(MPID_STATE_MPIDI_OFI_DO_GET_ACCUMULATE);
+     MPIR_FUNC_VERBOSE_ENTER(MPID_STATE_MPIDI_OFI_DO_GET_ACCUMULATE);
+ 
+@@ -1056,9 +1115,11 @@ static inline int MPIDI_OFI_do_get_accumulate(const void *origin_addr,
+ 
+     MPIDI_OFI_query_acc_atomic_support(basic_type, MPIDI_OFI_QUERY_FETCH_ATOMIC_COUNT,
+                                        op, win, &fi_dt, &fi_op, &max_count, &dt_size);
++    fprintf(stderr, "%s: YI--------max_count(%d)\n", __func__, max_count);
+     if (max_count == 0)
+         goto am_fallback;
+ 
++    fprintf(stderr, "%s: YI-------- 2\n", __func__);
+     max_size = MPIDI_OFI_check_acc_order_size(win, max_count * dt_size);
+     max_size = MPL_MIN(max_size, MPIDI_OFI_global.max_msg_size);
+     /* round down to multiple of dt_size */
+@@ -1161,6 +1222,7 @@ static inline int MPIDI_OFI_do_get_accumulate(const void *origin_addr,
+         msg.rma_iov_count = tout;
+         MPIDI_OFI_ASSERT_IOVEC_ALIGN(resultv);
+         MPIDI_OFI_INIT_CHUNK_CONTEXT(win, sigreq);
++        fprintf(stderr, "%s: YI calling fi_fetch_atomimsg\n", __func__);
+         MPIDI_OFI_CALL_RETRY(fi_fetch_atomicmsg(ep, &msg, resultv,
+                                                 NULL, rout, flags), rdma_readfrom, FALSE);
+         /* By default, progress is called only during fence, which significantly
+@@ -1180,6 +1242,7 @@ static inline int MPIDI_OFI_do_get_accumulate(const void *origin_addr,
+   fn_fail:
+     goto fn_exit;
+   am_fallback:
++    fprintf(stderr, "%s: YI--------op(0x%x) MPI_NO_OP(0x%x)\n", __func__, op, MPI_NO_OP);
+     if (unlikely(op == MPI_NO_OP)) {
+         if (MPIDIG_WIN(win, info_args).accumulate_ordering & MPIDIG_ACCU_ORDER_RAW) {
+             /* Wait for OFI acc to complete.
+@@ -1267,6 +1330,7 @@ static inline int MPIDI_NM_mpi_rget_accumulate(const void *origin_addr,
+     MPIR_FUNC_VERBOSE_STATE_DECL(MPID_STATE_MPIDI_NM_MPI_RGET_ACCUMULATE);
+     MPIR_FUNC_VERBOSE_ENTER(MPID_STATE_MPIDI_NM_MPI_RGET_ACCUMULATE);
+ 
++    fprintf(stderr, "%s: Y@@@@@@@ in request(%p) %s\n", __func__, request, __FILE__);
+     if (
+ #ifndef MPIDI_CH4_DIRECT_NETMOD
+            /* We have to disable network-based atomics in auto mode.
+@@ -1277,6 +1341,7 @@ static inline int MPIDI_NM_mpi_rget_accumulate(const void *origin_addr,
+            !MPIDIG_WIN(win, info_args).disable_shm_accumulate ||
+ #endif
+            !MPIDI_OFI_ENABLE_RMA || !MPIDI_OFI_ENABLE_ATOMICS) {
++        fprintf(stderr, "%s: Y@@@@@@@ 1\n", __func__);
+         mpi_errno = MPIDIG_mpi_rget_accumulate(origin_addr, origin_count, origin_datatype,
+                                                result_addr, result_count, result_datatype,
+                                                target_rank, target_disp, target_count,
+@@ -1284,6 +1349,7 @@ static inline int MPIDI_NM_mpi_rget_accumulate(const void *origin_addr,
+         goto fn_exit;
+     }
+ 
++    fprintf(stderr, "%s: Y@@@@@@@ 2 request(%p)\n", __func__, request);
+     mpi_errno = MPIDI_OFI_do_get_accumulate(origin_addr, origin_count, origin_datatype,
+                                             result_addr, result_count, result_datatype,
+                                             target_rank, target_disp, target_count,

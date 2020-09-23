@@ -8,16 +8,17 @@
 #PJM -o "./results/%n.%j.out"
 #PJM -e "./results/%n.%j.err"
 #
-#	PJM -L "node=12"
-#PJM -L "node=4"
-#PJM --mpi "max-proc-per-node=4"
-#	PJM --mpi "max-proc-per-node=1"
+#	PJM -L "node=12:noncont"
+#	PJM -L "node=4:noncont"
+#	PJM --mpi "max-proc-per-node=4"
+#PJM -L "node=2:noncont"
+#PJM --mpi "max-proc-per-node=1"
 #	PJM -L "elapse=00:20:00"
 #	PJM -L "elapse=00:30:00"
 #	PJM -L "elapse=00:10:00"
 #	PJM -L "elapse=00:6:00"
 #	PJM -L "elapse=00:2:40"
-#PJM -L "elapse=00:0:4"
+#PJM -L "elapse=00:0:10"
 #	PJM -L "elapse=00:2:30"
 #PJM -L "rscunit=rscunit_ft02,rscgrp=dvsys-spack2,jobenv=linux"
 #	PJM -L "rscunit=rscunit_ft02,rscgrp=dvsys-mck2_and_spack2,jobenv=linux"
@@ -30,9 +31,8 @@
 export LD_LIBRARY_PATH=${HOME}/mpich-tofu/lib:$LD_LIBRARY_PATH
 export MPIR_CVAR_OFI_USE_PROVIDER=tofu
 export MPICH_CH4_OFI_ENABLE_SCALABLE_ENDPOINTS=1
-export TEST_INSTDIR=../../mpich/test/mpi
+export TEST_INSTDIR=../../../mpich/test/mpi
 export MPIEXEC_TIMEOUT=180
-
 
 export TOFULOG_DIR=./results
 export UTF_MSGMODE=1	# Rendezous
@@ -45,7 +45,7 @@ export TOFU_NAMED_AV=1
 #export FI_LOG_LEVEL=Debug
 
 #export UTF_DEBUG=0xc
-export UTF_DEBUG=0x2c
+#export UTF_DEBUG=0xff
 #export UTF_DEBUG=0x94
 #export TOFU_DEBUG_FD=3
 #export TOFU_DEBUG_LVL=3
@@ -61,12 +61,14 @@ echo "TOFU_DEBUG_FD  = " $TOFU_DEBUG_FD
 echo "TOFU_DEBUG_LVL = " $TOFU_DEBUG_LVL
 #cho "MPITEST        = " $MPITEST
 
-echo "# mpiexec -n 4    ./cxx/rma/winfencex "
-mpiexec -n 4    $TEST_INSTDIR/./cxx/rma/winfencex  
-echo $?
-
+echo "# mpiexec -n 2  pt2pt/mprobe"
+mpiexec -n 2    $TEST_INSTDIR/./pt2pt/mprobe
+echo -e "[RETURN-VAL]: $?\n"
 exit
 
+echo "# mpiexec -n 2    ./errors/rma/cas_type_check "
+mpiexec -n 2    $TEST_INSTDIR/./errors/rma/cas_type_check  
+echo $?
 #echo "# Something wrong needs to investigate mpiexec -n 2    ./errors/rma/win_sync_free_at "
 #mpiexec -n 2    $TEST_INSTDIR/./errors/rma/win_sync_free_at  
 #echo $?
