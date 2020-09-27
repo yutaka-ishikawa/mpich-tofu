@@ -17,7 +17,7 @@
 #	PJM -L "elapse=00:30:00"
 #	PJM -L "elapse=00:10:00"
 #	PJM -L "elapse=00:6:00"
-#PJM -L "elapse=00:0:40"
+#PJM -L "elapse=00:4:30"
 #	PJM -L "elapse=00:2:00"
 #	PJM -L "elapse=00:2:30"
 #PJM -L "rscunit=rscunit_ft02,rscgrp=dvsys-spack2,jobenv=linux"
@@ -36,8 +36,8 @@ export TEST_INSTDIR=../../../mpich/test/mpi
 export MPIEXEC_TIMEOUT=180
 
 export TOFULOG_DIR=./results
-export UTF_MSGMODE=1	# Rendezous
-#export UTF_MSGMODE=0	# Eager
+#export UTF_MSGMODE=1	# Rendezous
+export UTF_MSGMODE=0	# Eager
 #export UTF_TRANSMODE=0	# Chained
 export UTF_TRANSMODE=1	# Aggressive
 export TOFU_NAMED_AV=1
@@ -46,7 +46,7 @@ export TOFU_NAMED_AV=1
 #export FI_LOG_LEVEL=Debug
 
 #export UTF_DEBUG=0xc
-export UTF_DEBUG=0xff
+#export UTF_DEBUG=0xff
 #export UTF_DEBUG=0x94
 #export TOFU_DEBUG_FD=3
 #export TOFU_DEBUG_LVL=3
@@ -62,10 +62,31 @@ echo "TOFU_DEBUG_FD  = " $TOFU_DEBUG_FD
 echo "TOFU_DEBUG_LVL = " $TOFU_DEBUG_LVL
 #cho "MPITEST        = " $MPITEST
 
+# This does not work because MPIDI_OFI_MAX_NUM_AM_BUFFERS limits this value. see src/mpid/ch4/netmod/ofi/ofi_types.h
+# Modified and use it
+export MPIR_PARAM_CH4_OFI_NUM_AM_BUFFERS=16
+echo "MPIR_PARAM_CH4_OFI_NUM_AM_BUFFERS=" $MPIR_PARAM_CH4_OFI_NUM_AM_BUFFERS
 export MPIR_CVAR_CH4_OFI_ENABLE_ATOMICS=0
-echo "MPIR_CVAR_CH4_OFI_ENABLE_ATOMICS= " $MPIR_CVAR_CH4_OFI_ENABLE_ATOMICS
+echo "MPIR_CVAR_CH4_OFI_ENABLE_ATOMICS =" $MPIR_CVAR_CH4_OFI_ENABLE_ATOMICS
 
-exit
+echo -e "[TESTNAME]: strided_acc_onelock\n[OUTPUT]:" | tee -a /dev/stderr
+timeout --preserve-status -k 2 30s mpiexec -n 2    /home/users/ea01/ea0103/work/mpich-tofu/mpich/test/mpi/rma/strided_acc_onelock 
+echo -e "[RETURN-VAL]: $?\n"
+exit 0
+
+echo -e "[TESTNAME]: manyrma2\n[OUTPUT]:" | tee -a /dev/stderr
+timeout --preserve-status -k 2 30s mpiexec -n 2    /home/users/ea01/ea0103/work/mpich-tofu/mpich/test/mpi/rma/manyrma2 
+echo -e "[RETURN-VAL]: $?\n"
+
+echo -e "[TESTNAME]: manyrma2_shm\n[OUTPUT]:" | tee -a /dev/stderr
+timeout --preserve-status -k 2 30s mpiexec -n 2    /home/users/ea01/ea0103/work/mpich-tofu/mpich/test/mpi/rma/manyrma2_shm 
+echo -e "[RETURN-VAL]: $?\n"
+
+echo -e "[TESTNAME]: rma_contig\n[OUTPUT]:" | tee -a /dev/stderr
+timeout --preserve-status -k 2 30s mpiexec -n 2    /home/users/ea01/ea0103/work/mpich-tofu/mpich/test/mpi/rma/rma_contig 
+echo -e "[RETURN-VAL]: $?\n"
+
+#manyrma2 manyrma2_shm rma_contig badrma acc_ordering fence_shm get_struct at_complete aint acc_pairtype acc_pairtype_shm manyget large_small_acc rget_unlock rget_testall 
 
 # MPICH PROBLEM on MPI_Win_Attach MPI_Win_create_dynamic ? remote key has not been shared
 #echo -e "[TESTNAME]: linked_list\n[OUTPUT]:" | tee -a /dev/stderr

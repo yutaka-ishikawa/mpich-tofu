@@ -243,6 +243,9 @@ echo "TOFU_NAMED_AV = " $TOFU_NAMED_AV
 echo "UTF_MSGMODE   = " $UTF_MSGMODE "(0: Eager, 1: Rendezous)"
 echo "UTF_TRANSMODE = " $UTF_TRANSMODE "(0: Chained, 1: Aggressive)"
 echo "MPIR_CVAR_ALLTOALL_SHORT_MSG_SIZE = " $MPIR_CVAR_ALLTOALL_SHORT_MSG_SIZE
+# ADDED on 2020/09/23
+export MPIR_CVAR_CH4_OFI_ENABLE_ATOMICS=0
+echo "MPIR_CVAR_CH4_OFI_ENABLE_ATOMICS= " $MPIR_CVAR_CH4_OFI_ENABLE_ATOMICS
 
 `find "${runlists_dir}" -name "runtests-*.batch" -exec echo "sh" {} \;`
 
