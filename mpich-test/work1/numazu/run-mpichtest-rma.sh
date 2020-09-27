@@ -36,8 +36,8 @@ export TEST_INSTDIR=../../../mpich/test/mpi
 export MPIEXEC_TIMEOUT=180
 
 export TOFULOG_DIR=./results
-#export UTF_MSGMODE=1	# Rendezous
-export UTF_MSGMODE=0	# Eager
+export UTF_MSGMODE=1	# Rendezous
+#export UTF_MSGMODE=0	# Eager
 #export UTF_TRANSMODE=0	# Chained
 export UTF_TRANSMODE=1	# Aggressive
 export TOFU_NAMED_AV=1
@@ -45,6 +45,8 @@ export TOFU_NAMED_AV=1
 #export FI_LOG_PROV=tofu
 #export FI_LOG_LEVEL=Debug
 
+#export UTF_DEBUG=0x20	# RMA
+#export UTF_DEBUG=0x80	# Active Message
 #export UTF_DEBUG=0xc
 #export UTF_DEBUG=0xff
 #export UTF_DEBUG=0x94
@@ -64,27 +66,28 @@ echo "TOFU_DEBUG_LVL = " $TOFU_DEBUG_LVL
 
 # This does not work because MPIDI_OFI_MAX_NUM_AM_BUFFERS limits this value. see src/mpid/ch4/netmod/ofi/ofi_types.h
 # Modified and use it
-export MPIR_PARAM_CH4_OFI_NUM_AM_BUFFERS=16
+###export MPIR_PARAM_CH4_OFI_NUM_AM_BUFFERS=16
+export MPIR_PARAM_CH4_OFI_NUM_AM_BUFFERS=8
 echo "MPIR_PARAM_CH4_OFI_NUM_AM_BUFFERS=" $MPIR_PARAM_CH4_OFI_NUM_AM_BUFFERS
 export MPIR_CVAR_CH4_OFI_ENABLE_ATOMICS=0
 echo "MPIR_CVAR_CH4_OFI_ENABLE_ATOMICS =" $MPIR_CVAR_CH4_OFI_ENABLE_ATOMICS
 
-echo -e "[TESTNAME]: strided_acc_onelock\n[OUTPUT]:" | tee -a /dev/stderr
-timeout --preserve-status -k 2 30s mpiexec -n 2    /home/users/ea01/ea0103/work/mpich-tofu/mpich/test/mpi/rma/strided_acc_onelock 
+#OK 2020/09/27
+#echo -e "[TESTNAME]: strided_acc_onelock\n[OUTPUT]:" | tee -a /dev/stderr
+#timeout --preserve-status -k 2 30s mpiexec -n 2    /home/users/ea01/ea0103/work/mpich-tofu/mpich/test/mpi/rma/strided_acc_onelock 
+#echo -e "[RETURN-VAL]: $?\n"
+
+#OK
+#export TFI_COMPLETION_PENDING=10
+#echo -e "[TESTNAME]: manyrma2\n[OUTPUT]:" | tee -a /dev/stderr
+#timeout --preserve-status -k 2 10s mpiexec -n 2    /home/users/ea01/ea0103/work/mpich-tofu/mpich/test/mpi/rma/manyrma2
+#echo -e "[RETURN-VAL]: $?\n"
+
+#OK It takes 2min50sec
+echo -e "[TESTNAME]: rma_contig\n[OUTPUT]:" | tee -a /dev/stderr
+timeout --preserve-status -k 2 240s mpiexec -n 2    /home/users/ea01/ea0103/work/mpich-tofu/mpich/test/mpi/rma/rma_contig 
 echo -e "[RETURN-VAL]: $?\n"
 exit 0
-
-echo -e "[TESTNAME]: manyrma2\n[OUTPUT]:" | tee -a /dev/stderr
-timeout --preserve-status -k 2 30s mpiexec -n 2    /home/users/ea01/ea0103/work/mpich-tofu/mpich/test/mpi/rma/manyrma2 
-echo -e "[RETURN-VAL]: $?\n"
-
-echo -e "[TESTNAME]: manyrma2_shm\n[OUTPUT]:" | tee -a /dev/stderr
-timeout --preserve-status -k 2 30s mpiexec -n 2    /home/users/ea01/ea0103/work/mpich-tofu/mpich/test/mpi/rma/manyrma2_shm 
-echo -e "[RETURN-VAL]: $?\n"
-
-echo -e "[TESTNAME]: rma_contig\n[OUTPUT]:" | tee -a /dev/stderr
-timeout --preserve-status -k 2 30s mpiexec -n 2    /home/users/ea01/ea0103/work/mpich-tofu/mpich/test/mpi/rma/rma_contig 
-echo -e "[RETURN-VAL]: $?\n"
 
 #manyrma2 manyrma2_shm rma_contig badrma acc_ordering fence_shm get_struct at_complete aint acc_pairtype acc_pairtype_shm manyget large_small_acc rget_unlock rget_testall 
 

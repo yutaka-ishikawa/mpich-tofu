@@ -1,3 +1,10 @@
+3min	-np 2 test/mpi/rma/rma_contig 
+7min	-np 2 test/mpi/rma/large_acc_flush_local 
+5min	-np 3 test/mpi/rma/atomic_get_long_int 
+5min	-np 3 test/mpi/rma/atomic_get_double_int 
+5min	-np 3 test/mpi/rma/atomic_get_long_double_int
+7min	-np 3 test/mpi/rma/large_acc_flush_local
+
 $ cd script
 $ sh ./generate_run.sh -l pt2pt
 $ sh ./generate_run.sh -l pt2pt
@@ -13,7 +20,6 @@ edit ./src/libdtpools.la
 $ popd
 $ make
 --------------------------------------------------------------------------------------------------------------------
-
 
 export MPICH_ENABLE_CXX=no; export MPI_NO_SPAWN=yes; ./configure --host=aarch64-unknown-linux-gnu \
 	    --disable-cxx --disable-spawn --disable-romio --enable-fortran=no \
