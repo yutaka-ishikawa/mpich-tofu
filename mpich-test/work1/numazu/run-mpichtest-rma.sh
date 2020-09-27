@@ -85,7 +85,7 @@ echo "MPIR_CVAR_CH4_OFI_ENABLE_ATOMICS =" $MPIR_CVAR_CH4_OFI_ENABLE_ATOMICS
 
 #OK It takes 2min50sec
 echo -e "[TESTNAME]: rma_contig\n[OUTPUT]:" | tee -a /dev/stderr
-timeout --preserve-status -k 2 240s mpiexec -n 2    /home/users/ea01/ea0103/work/mpich-tofu/mpich/test/mpi/rma/rma_contig 
+timeout --preserve-status -k 2 250s mpiexec -n 2    /home/users/ea01/ea0103/work/mpich-tofu/mpich/test/mpi/rma/rma_contig 
 echo -e "[RETURN-VAL]: $?\n"
 exit 0
 
