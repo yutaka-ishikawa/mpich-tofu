@@ -23,13 +23,21 @@ export MPIR_CVAR_ALLTOALL_SHORT_MSG_SIZE=2147483647 # 32768 in default (integer 
 export TEST_INSTDIR=../../../mpich/test/mpi
 export MPIEXEC_TIMEOUT=180
 
-export TOFULOG_DIR=./results
+##export TOFULOG_DIR=./results
 
-export UTF_MSGMODE=1	# Rendezous
-#export UTF_MSGMODE=0	# Eager
+#export UTF_MSGMODE=1	# Rendezous
+export UTF_MSGMODE=0	# Eager
 #export UTF_TRANSMODE=0	# Chained
 export UTF_TRANSMODE=1	# Aggressive
 export TOFU_NAMED_AV=1
+export MPIR_CVAR_CH4_OFI_CAPABILITY_SETS_DEBUG=1
+export MPIR_CVAR_CH4_OFI_ENABLE_MR_VIRT_ADDRESS=1	# MPICH 3.4.x
+export MPIR_CVAR_CH4_OFI_ENABLE_RMA=1
+export MPIR_CVAR_CH4_OFI_ENABLE_TAGGED=1	#
+
+#export UTF_DEBUG=0x3c	# PROTOCOL EAGER RENDEZOUS RMA
+#export UTF_DEBUG=0x43c	# INIFIN PROTOCOL EAGER RENDEZOUS RMA
+#export UTF_DEBUG=0x1000	# COMM
 
 echo "UTF_MSGMODE = " $UTF_MSGMODE
 echo "TOFULOG_DIR = " $TOFULOG_DIR
@@ -42,11 +50,61 @@ echo "UTF_DEBUG      = " $UTF_DEBUG
 echo "TOFULOG_DIR    = " $TOFULOG_DIR
 echo "TOFU_DEBUG_FD  = " $TOFU_DEBUG_FD
 echo "TOFU_DEBUG_LVL = " $TOFU_DEBUG_LVL
+echo
+echo
 
-echo "# mpiexec -n 10    ./coll/alltoallw2 " 
-mpiexec -n 10    $TEST_INSTDIR/./coll/alltoallw2 
+#export MPIR_CVAR_ALLREDUCE_INTRA_ALGORITHM=recursive_doubling
+export MPIR_CVAR_CH4_OFI_ENABLE_TAGGED=0
+#export UTF_DEBUG=0x1000	# COMM
+export MAXCOUNT=514
+echo -e "[TESTNAME]: icallreduce\n[OUTPUT]:" | tee -a /dev/stderr
+timeout --preserve-status -k 2 30s mpiexec -n 7    /home/users/ea01/ea0103/work/mpich-tofu/mpich/test/mpi/coll/icallreduce 
+echo -e "[RETURN-VAL]: $?\n"
+
+export MAXCOUNT=500
+echo -e "[TESTNAME]: icallreduce\n[OUTPUT]:" | tee -a /dev/stderr
+timeout --preserve-status -k 2 30s mpiexec -n 7    /home/users/ea01/ea0103/work/mpich-tofu/mpich/test/mpi/coll/icallreduce 
+echo -e "[RETURN-VAL]: $?\n"
+exit
+
+echo -e "[TESTNAME]: nonblocking3\n[OUTPUT]:" | tee -a /dev/stderr
+timeout --preserve-status -k 2 30s mpiexec -n 5    /home/users/ea01/ea0103/work/mpich-tofu/mpich/test/mpi/coll/nonblocking3 
+echo -e "[RETURN-VAL]: $?\n"
 echo $? 
 exit
+
+echo "# mpiexec -n 16    ./coll/uoplong " 
+mpiexec -n 16    $TEST_INSTDIR/./coll/uoplong
+echo $? 
+echo
+exit
+
+###########################################################################################################
+echo "UTF_MSGMODE   = " $UTF_MSGMODE "(0: Eager, 1: Rendezous)"
+echo "MPIR_CVAR_CH4_OFI_ENABLE_TAGGED = " $MPIR_CVAR_CH4_OFI_ENABLE_TAGGED
+echo "# mpiexec -n 7    ./coll/icallreduce " 
+mpiexec -n 7    $TEST_INSTDIR/./coll/icallreduce 
+echo $? 
+
+exit
+echo "# mpiexec -n 16    ./coll/uoplong " 
+mpiexec -n 16    $TEST_INSTDIR/./coll/uoplong
+echo $? 
+echo
+echo "# mpiexec -n 16    ./coll/uoplong " 
+mpiexec -n 16    $TEST_INSTDIR/./coll/uoplong
+echo $? 
+echo
+echo "# mpiexec -n 16    ./coll/uoplong " 
+mpiexec -n 16    $TEST_INSTDIR/./coll/uoplong
+echo $? 
+echo
+exit
+
+#echo "# mpiexec -n 10    ./coll/alltoallw2 " 
+#mpiexec -n 10    $TEST_INSTDIR/./coll/alltoallw2 
+#echo $? 
+#exit
 
 echo "# mpiexec -n 4    ./coll/allred2 " 
 mpiexec -n 4    $TEST_INSTDIR/./coll/allred2 
@@ -54,12 +112,12 @@ echo $?
 exit
 
 echo "# mpiexec -n 7    ./coll/allred" 
-mpiexec -n 7    $TEST_INSTDIR/./coll/allred 
+mpiexec -n 7    $TEST_INSTDIR/./coll/allred -count=10
 echo $? 
 
 export MPIEXEC_TIMEOUT=180
 echo "# mpiexec -n 4    ./coll/allred 100" 
-mpiexec -n 4    $TEST_INSTDIR/./coll/allred 100
+mpiexec -n 4    $TEST_INSTDIR/./coll/allred -count=100
 echo $? 
 export MPIEXEC_TIMEOUT=180
 echo "# mpiexec -n 4    ./coll/allredmany " 

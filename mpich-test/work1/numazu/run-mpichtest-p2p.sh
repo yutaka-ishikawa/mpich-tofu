@@ -11,14 +11,15 @@
 #	PJM -L "node=12:noncont"
 #	PJM -L "node=4:noncont"
 #	PJM --mpi "max-proc-per-node=4"
-#PJM -L "node=2:noncont"
-#PJM --mpi "max-proc-per-node=1"
+#	PJM -L "node=2:noncont"
+#PJM -L "node=4:noncont"
+#PJM --mpi "max-proc-per-node=4"
 #	PJM -L "elapse=00:20:00"
 #	PJM -L "elapse=00:30:00"
 #	PJM -L "elapse=00:10:00"
 #	PJM -L "elapse=00:6:00"
 #	PJM -L "elapse=00:2:40"
-#PJM -L "elapse=00:0:10"
+#PJM -L "elapse=00:0:15"
 #	PJM -L "elapse=00:2:30"
 #PJM -L "rscunit=rscunit_ft02,rscgrp=dvsys-spack2,jobenv=linux"
 #	PJM -L "rscunit=rscunit_ft02,rscgrp=dvsys-mck2_and_spack2,jobenv=linux"
@@ -34,17 +35,19 @@ export MPICH_CH4_OFI_ENABLE_SCALABLE_ENDPOINTS=1
 export TEST_INSTDIR=../../../mpich/test/mpi
 export MPIEXEC_TIMEOUT=180
 
-export TOFULOG_DIR=./results
-export UTF_MSGMODE=1	# Rendezous
-#export UTF_MSGMODE=0	# Eager
+##export TOFULOG_DIR=./results
+#export UTF_MSGMODE=1	# Rendezous
+export UTF_MSGMODE=0	# Eager
 #export UTF_TRANSMODE=0	# Chained
 export UTF_TRANSMODE=1	# Aggressive
 export TOFU_NAMED_AV=1
 
 #export FI_LOG_PROV=tofu
 #export FI_LOG_LEVEL=Debug
+#export FI_LOG_LEVEL=Core
 
-#export UTF_DEBUG=0xc
+#export UTF_DEBUG=0x3c	# PROTOCOL EAGER RENDEZOUS RMA
+#export UTF_DEBUG=0x41c	# INIFIN PROTOCOL EAGER RENDEZOUS
 #export UTF_DEBUG=0xff
 #export UTF_DEBUG=0x94
 #export TOFU_DEBUG_FD=3
@@ -61,11 +64,48 @@ echo "TOFU_DEBUG_FD  = " $TOFU_DEBUG_FD
 echo "TOFU_DEBUG_LVL = " $TOFU_DEBUG_LVL
 #cho "MPITEST        = " $MPITEST
 
+export MPITEST_VERBOSE=1
+export MPIR_CVAR_CH4_OFI_ENABLE_MR_VIRT_ADDRESS=1
+export MPIR_CVAR_CH4_OFI_ENABLE_RMA=1
+export MPIR_CVAR_CH4_OFI_CAPABILITY_SETS_DEBUG=1
+#export MPIR_CVAR_CH4_OFI_ENABLE_TAGGED=0
+export UTF_DEBUG=0x1000	# COMM
+
+echo "UTF_MSGMODE    = " $UTF_MSGMODE
+echo "MPIR_CVAR_CH4_OFI_ENABLE_TAGGED = " $MPIR_CVAR_CH4_OFI_ENABLE_TAGGED
+
+echo "# mpiexec -n 2    ./pt2pt/large_tag "
+mpiexec -n 2    $TEST_INSTDIR/./pt2pt/large_tag  
+echo $?
+exit
+
 echo "# mpiexec -n 2  pt2pt/mprobe"
 mpiexec -n 2    $TEST_INSTDIR/./pt2pt/mprobe
 echo -e "[RETURN-VAL]: $?\n"
 exit
 
+
+echo "#mpiexec -n 4    ./pt2pt/sendall "
+timeout --preserve-status -k 2 30s mpiexec -n 4    /home/users/ea01/ea0103/work/mpich-tofu/mpich/test/mpi/pt2pt/sendall
+echo $?
+exit
+
+echo -e "[TESTNAME]: large_message\n[OUTPUT]:" | tee -a /dev/stderr
+mpiexec -n 3  $TEST_INSTDIR/./pt2pt/large_message
+echo -e "[RETURN-VAL]: $?\n"
+
+exit
+
+echo "# mpiexec -n 2  pt2pt/multi_psend_derived"
+mpiexec -n 2    $TEST_INSTDIR/./pt2pt/multi_psend_derived
+echo -e "[RETURN-VAL]: $?\n"
+
+echo "# mpiexec -n 2  pt2pt/mprobe"
+mpiexec -n 2    $TEST_INSTDIR/./pt2pt/mprobe
+echo -e "[RETURN-VAL]: $?\n"
+exit
+
+###################################################################
 echo "# mpiexec -n 2    ./errors/rma/cas_type_check "
 mpiexec -n 2    $TEST_INSTDIR/./errors/rma/cas_type_check  
 echo $?

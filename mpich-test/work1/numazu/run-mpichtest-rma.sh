@@ -35,7 +35,7 @@ export MPIR_CVAR_ALLTOALL_SHORT_MSG_SIZE=2147483647 # 32768 in default (integer 
 export TEST_INSTDIR=../../../mpich/test/mpi
 export MPIEXEC_TIMEOUT=180
 
-export TOFULOG_DIR=./results
+##export TOFULOG_DIR=./results
 export UTF_MSGMODE=1	# Rendezous
 #export UTF_MSGMODE=0	# Eager
 #export UTF_TRANSMODE=0	# Chained
@@ -69,8 +69,17 @@ echo "TOFU_DEBUG_LVL = " $TOFU_DEBUG_LVL
 ###export MPIR_PARAM_CH4_OFI_NUM_AM_BUFFERS=16
 export MPIR_PARAM_CH4_OFI_NUM_AM_BUFFERS=8
 echo "MPIR_PARAM_CH4_OFI_NUM_AM_BUFFERS=" $MPIR_PARAM_CH4_OFI_NUM_AM_BUFFERS
-export MPIR_CVAR_CH4_OFI_ENABLE_ATOMICS=0
+
+## ATOMICS does not work on 3.4.x 2020/10/14
+export MPIR_CVAR_CH4_OFI_ENABLE_ATOMICS=-1
 echo "MPIR_CVAR_CH4_OFI_ENABLE_ATOMICS =" $MPIR_CVAR_CH4_OFI_ENABLE_ATOMICS
+
+#manyrma2 manyrma2_shm rma_contig badrma acc_ordering fence_shm get_struct at_complete aint acc_pairtype acc_pairtype_shm manyget large_small_acc rget_unlock rget_testall 
+
+echo -e "[TESTNAME]: put_base\n[OUTPUT]:" | tee -a /dev/stderr
+timeout --preserve-status -k 2 30s mpiexec -n 2    /home/users/ea01/ea0103/work/mpich-tofu/mpich/test/mpi/rma/put_base 
+echo -e "[RETURN-VAL]: $?\n"
+exit 0
 
 #OK 2020/09/27
 #echo -e "[TESTNAME]: strided_acc_onelock\n[OUTPUT]:" | tee -a /dev/stderr
@@ -84,12 +93,9 @@ echo "MPIR_CVAR_CH4_OFI_ENABLE_ATOMICS =" $MPIR_CVAR_CH4_OFI_ENABLE_ATOMICS
 #echo -e "[RETURN-VAL]: $?\n"
 
 #OK It takes 2min50sec
-echo -e "[TESTNAME]: rma_contig\n[OUTPUT]:" | tee -a /dev/stderr
-timeout --preserve-status -k 2 250s mpiexec -n 2    /home/users/ea01/ea0103/work/mpich-tofu/mpich/test/mpi/rma/rma_contig 
-echo -e "[RETURN-VAL]: $?\n"
-exit 0
-
-#manyrma2 manyrma2_shm rma_contig badrma acc_ordering fence_shm get_struct at_complete aint acc_pairtype acc_pairtype_shm manyget large_small_acc rget_unlock rget_testall 
+#echo -e "[TESTNAME]: rma_contig\n[OUTPUT]:" | tee -a /dev/stderr
+#timeout --preserve-status -k 2 250s mpiexec -n 2    /home/users/ea01/ea0103/work/mpich-tofu/mpich/test/mpi/rma/rma_contig 
+#echo -e "[RETURN-VAL]: $?\n"
 
 # MPICH PROBLEM on MPI_Win_Attach MPI_Win_create_dynamic ? remote key has not been shared
 #echo -e "[TESTNAME]: linked_list\n[OUTPUT]:" | tee -a /dev/stderr
@@ -101,7 +107,7 @@ exit 0
 #timeout --preserve-status -k 2 30s mpiexec -n 4    /home/users/ea01/ea0103/work/mpich-tofu/mpich/test/mpi/rma/linked_list_fop 
 #echo -e "[RETURN-VAL]: $?\n"
 
-# OK with export MPIR_CVAR_CH4_OFI_ENABLE_ATOMICS=0
+# OK with export MPIR_CVAR_CH4_OFI_ENABLE_ATOMICS=0 on older MPICH, but not on 3.4.x 2020/10/14
 #echo -e "[TESTNAME]: reqops\n[OUTPUT]:" | tee -a /dev/stderr
 #timeout --preserve-status -k 2 30s mpiexec -n 4    /home/users/ea01/ea0103/work/mpich-tofu/mpich/test/mpi/rma/reqops 
 #echo -e "[RETURN-VAL]: $?\n"

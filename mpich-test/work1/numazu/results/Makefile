@@ -1,4 +1,4 @@
 run-clean:
-	rm -f MPICH-TEST*.err MPICH-TEST*.out MPICH-TEST*.stat tofulog-*
+	rm -f MPICH-*.err* MPICH-*.out* MPICH-*.stat tofulog-*
 
 
