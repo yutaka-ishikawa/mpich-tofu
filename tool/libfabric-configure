@@ -5,7 +5,8 @@ LIBFABRIC_SRC=./libfabric
 export LD_LIBRARY_PATH=${INSTDIR}/lib
 LOGDIR=log
 
-#	--enable-debug \
+#
+# --enable-debug
 #
 
 case `hostname` in
@@ -18,9 +19,9 @@ case `hostname` in
 	XX_CONF_HOST=--host=aarch64-linux-gnu
 	export LIBS="-ltofutop -ltofucom -ldl -lutf"
 	export CPPFLAGS="-I/opt/FJSVxos/devkit/aarch64/rfs/usr/include/FJSVtcs/ple/"
-	export CFLAGS="-O3 -g -DUTF_TIMER"
+##	export CFLAGS="-O3 -g -DUTF_TIMER -DNDEBUG"
+	export CFLAGS="-O3 -g -DNDEBUG"
 	CONFIG_OPTIONS="--disable-psm \
-	--enable-debug \
 	--disable-psm2 \
 	--disable-sockets \
 	--disable-verbs \
@@ -86,5 +87,21 @@ date
 	$CONFIG_OPTIONS \
 	--enable-tofu=yes \
 	--enable-shared \
+	--enable-direct=tofu \
 	>../$LOGDIR/cnf-libfabric.txt 2>&1)
 date
+
+#
+# For --enable-direct=tofu
+#	we must implement the following files for tofu:
+#	prov/tofu/include/rdma/fi_direct.h
+#	prov/tofu/include/rdma/fi_direct_atomic.h
+#	prov/tofu/include/rdma/fi_direct_atomic_def.h
+#	prov/tofu/include/rdma/fi_direct_atomic_cm.h
+#	prov/tofu/include/rdma/fi_direct_atomic_domain.h
+#	prov/tofu/include/rdma/fi_direct_atomic_endpoint.h
+#	prov/tofu/include/rdma/fi_direct_eq.h
+#	prov/tofu/include/rdma/fi_direct_rma.h
+#	prov/tofu/include/rdma/fi_direct_tagged.h
+#	prov/tofu/include/rdma/fi_direct_trigger.h
+#

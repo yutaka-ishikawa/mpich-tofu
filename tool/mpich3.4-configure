@@ -1,10 +1,17 @@
 #!/bin/bash
 OPTION=$1
-DIR=$2
+SRC=$2
+DIR=$3
+
+OPTION=${OPTION:-normal}
+MPICH_SRC=${SRC:-./mpich}
 INSTDIR=${DIR:-$HOME/mpich-tofu}
-MPICH_SRC=./mpich
+
 LOGDIR=log
 CUR_DIR=`pwd`
+
+echo "option=" $OPTION "dir=" $DIR "instdir=" $INSTDIR "mpich_src=" $MPICH_SRC "logdir=" $LOGDIR
+
 export LD_LIBRARY_PATH=$INSTDIR/lib:$LD_LIBRARY_PATH
 
 export LIBS="-ldl -lrt -lutf -ltofutop -ltofucom -lpmix -lfabric"
@@ -16,6 +23,7 @@ case `hostname` in
 	export CXX=/opt/FJSVxos/devkit/aarch64/bin/aarch64-linux-gnu-g++
 	export LD=/opt/FJSVxos/devkit/aarch64/bin/aarch64-linux-gnu-ld
 	export CPPFLAGS=-I/opt/FJSVxos/devkit/aarch64/rfs/usr/include/FJSVtcs/ple
+##	export CFLAGS="-O3 -DFABRIC_DIRECT"
 	# export LDFLAGS="-L/opt/FJSVxos/devkit/aarch64/aarch64-linux-gnu/lib64 -L/opt/FJSVxtclanga/tcsds-1.1.7/lib64 -L/opt/FJSVxos/devkit/aarch64/rfs/usr/lib64 -L$LD_LIBRARY_PATH -L$INSTDIR/lib"
 	export LDFLAGS="-L$INSTDIR/lib"
 	XX_CONF_HOST=--host=aarch64-unknown-linux-gnu
@@ -55,7 +63,7 @@ case $OPTION in
 	XX_CONF_PERF_ARGS=" \
 		--enable-error-checking=all \
 		--enable-error-messages=all \
-		--enable-g=all \
+		--enable-g=dbg \
 		--enable-fast=O0 \
 		--enable-mpit-pvars=all \
 		--enable-timing=runtime \
@@ -64,11 +72,12 @@ case $OPTION in
 	;;
     normal)
 	echo "NORMAL"
+	# --enable-fast=none
+	# --enable-g=most
 	XX_CONF_PERF_ARGS=" \
 		--enable-error-checking=runtime \
 		--enable-error-messages=generic \
-		--enable-g=most \
-		--enable-fast=none \
+		--enable-fast=O3 \
 		--enable-mpit-pvars=all \
 		--enable-timing=runtime \
 		--enable-threads=runtime \
@@ -79,7 +88,7 @@ case $OPTION in
 	XX_CONF_PERF_ARGS=" \
 		--enable-error-checking=no \
 		--enable-error-messages=generic \
-		--enable-g=none \
+		--enable-g=dbg \
 		--enable-fast=all \
 		--enable-mpit-pvars=none \
 		--enable-timing=none \
@@ -90,13 +99,47 @@ case $OPTION in
 	echo "PERFORMANCE HACK"
 	XX_CONF_PERF_ARGS=" \
 		--enable-error-checking=no \
-		--enable-error-messages=none \
+		--enable-error-messages=generic \
 		--enable-g=none \
 		--enable-fast=all \
 		--enable-mpit-pvars=none \
 		--enable-timing=none \
 		--enable-threads=runtime \
+		--disable-direct \
+		--enable-debug \
 	"
+	;;
+    exp)
+	echo "Experiment"
+	XX_CONF_PERF_ARGS=" \
+		--enable-fast=all \
+		--enable-error-checking=no \
+		--enable-g=none \
+		--disable-debuginfo \
+		--enable-threads=single \
+		--without-ch4-shmmods \
+		--with-device=ch4:ofi:tofu \
+	"
+##		--with-ch4-ofi-direct-provider=socket
+##		--with-ch4-ofi-direct-provider=tofu
+
+#	XX_CONF_PERF_ARGS=" \
+#		--enable-error-checking=no \
+#		--enable-error-messages=generic \
+#		--enable-g=dbg \
+#		--enable-fast=all \
+#		--enable-mpit-pvars=none \
+#		--enable-timing=runtime \
+#		--enable-threads=runtime \
+#		--disable-direct \
+#	"
+	;;
+    vanilla)
+	echo "Vanilla"
+#	XX_CONF_PERF_ARGS=" \
+#		--enable-ch4-netmod-direct=no \
+#		--enable-ch4-netmod-inline=no \
+#	"
 	;;
     *)
 	echo "DISABLE-FAST"
@@ -107,12 +150,14 @@ case $OPTION in
 esac
 
 # --disable-static
+# --disable-direct
+# --enable-threads=single
+#	--enable-debug
 
 which gcc
 date
 (cd $MPICH_SRC; export ac_cv_func_malloc_0_nonnull=yes; ./configure \
 	$XX_CONF_HOST \
-	--enable-threads=single \
 	--config-cache \
 	--prefix=${INSTDIR} \
 	--enable-shared \
@@ -135,13 +180,11 @@ date
 	--without-ch4-shmmods \
         --disable-ofi-domain \
 	\
-	--enable-debug \
-	--disable-direct \
 	--with-wrapper-dl-type=none \
 	MPICHLIB_CFLAGS=-O3 MPICHLIB_FFLAGS=-O3 MPICHLIB_CXXFLAGS=-O3 MPICHLIB_FCFLAGS="-g -O1" MPICH_MPICC_LIBS="-lutf -lpmix -ldl -lrt -ltofutop -ltofucom -lfabric" \
 	MPICH_MPICXX_LIBS="-lutf -lpmix -ldl -lrt -ltofutop -ltofucom -lfabric" \
 	MPICH_MPIF77_LIBS="-lutf -lpmix -ldl -lrt -ltofutop -ltofucom -lfabric" \
-	>../$LOGDIR/cnf-mpi.txt 2>&1)
+	>../$LOGDIR/cnf-mpi-$OPTION.txt 2>&1)
 
 #(cd ${MPICH_SRC}; make clean >/dev/null)
 #(cd ${MPICH_SRC}; make install >../ins-mpi.txt 2>&1)
