@@ -88,6 +88,7 @@ date
 	--enable-tofu=yes \
 	--enable-shared \
 	--enable-direct=tofu \
+	--enable-direct=tofu \
 	>../$LOGDIR/cnf-libfabric.txt 2>&1)
 date
 
