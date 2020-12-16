@@ -119,6 +119,7 @@ case $OPTION in
 		--enable-threads=single \
 		--without-ch4-shmmods \
 		--with-device=ch4:ofi:tofu \
+		--with-ch4-ofi-direct-provider=tofu \
 	"
 ##		--with-ch4-ofi-direct-provider=socket
 ##		--with-ch4-ofi-direct-provider=tofu
