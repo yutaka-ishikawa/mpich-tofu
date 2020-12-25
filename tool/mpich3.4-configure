@@ -23,7 +23,7 @@ case `hostname` in
 	export CXX=/opt/FJSVxos/devkit/aarch64/bin/aarch64-linux-gnu-g++
 	export LD=/opt/FJSVxos/devkit/aarch64/bin/aarch64-linux-gnu-ld
 	export CPPFLAGS=-I/opt/FJSVxos/devkit/aarch64/rfs/usr/include/FJSVtcs/ple
-##	export CFLAGS="-O3 -DFABRIC_DIRECT"
+	export CFLAGS="-O3 -DFABRIC_DIRECT"
 	# export LDFLAGS="-L/opt/FJSVxos/devkit/aarch64/aarch64-linux-gnu/lib64 -L/opt/FJSVxtclanga/tcsds-1.1.7/lib64 -L/opt/FJSVxos/devkit/aarch64/rfs/usr/lib64 -L$LD_LIBRARY_PATH -L$INSTDIR/lib"
 	export LDFLAGS="-L$INSTDIR/lib"
 	XX_CONF_HOST=--host=aarch64-unknown-linux-gnu
@@ -118,9 +118,15 @@ case $OPTION in
 		--disable-debuginfo \
 		--enable-threads=single \
 		--without-ch4-shmmods \
-		--with-device=ch4:ofi:tofu \
+		--with-device=ch4:ofi \
+		--with-libfabric=embedded \
+		--enable-direct=tofu \
+		--enable-tofu=yes \
 		--with-ch4-ofi-direct-provider=tofu \
 	"
+#		--enable-direct=tofu
+#		--with-ch4-ofi-direct-provider=tofu
+##		--with-device=ch4:ofi:tofu \
 ##		--with-ch4-ofi-direct-provider=socket
 ##		--with-ch4-ofi-direct-provider=tofu
 
@@ -187,6 +193,7 @@ date
 	MPICH_MPIF77_LIBS="-lutf -lpmix -ldl -lrt -ltofutop -ltofucom -lfabric" \
 	>../$LOGDIR/cnf-mpi-$OPTION.txt 2>&1)
 
+##	--with-libfabric-include=$INSTDIR/include
 #(cd ${MPICH_SRC}; make clean >/dev/null)
 #(cd ${MPICH_SRC}; make install >../ins-mpi.txt 2>&1)
 date
