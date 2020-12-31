@@ -118,7 +118,7 @@ case $OPTION in
 		--disable-debuginfo \
 		--enable-threads=single \
 		--without-ch4-shmmods \
-		--with-device=ch4:ofi \
+		--with-device=ch4:ofi:tofu \
 		--with-libfabric=embedded \
 		--enable-direct=tofu \
 		--enable-tofu=yes \
@@ -126,7 +126,6 @@ case $OPTION in
 	"
 #		--enable-direct=tofu
 #		--with-ch4-ofi-direct-provider=tofu
-##		--with-device=ch4:ofi:tofu \
 ##		--with-ch4-ofi-direct-provider=socket
 ##		--with-ch4-ofi-direct-provider=tofu
 
