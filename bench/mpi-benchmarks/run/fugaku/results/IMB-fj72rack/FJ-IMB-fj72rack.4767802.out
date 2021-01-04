@@ -1,0 +1,127 @@
+mpiexec  -of results/IMB-fj72rack/%n.%j.out -oferr results/IMB-fj72rack/%n.%j.err ../../IMB-MPI1-fj -mem 5 -npmin  110592 -msglen len2.txt  Allreduce Reduce Allgather Allgatherv Gather Scatter Alltoall Bcast Barrier
+#------------------------------------------------------------
+#    Intel(R) MPI Benchmarks 2019 Update 6, MPI-1 part    
+#------------------------------------------------------------
+# Date                  : Sun Jan  3 12:21:18 2021
+# Machine               : aarch64
+# System                : Linux
+# Release               : 4.18.0-193.13.2.el8_2.aarch64
+# Version               : #1 SMP Mon Jul 13 19:19:04 EDT 2020
+# MPI Version           : 3.1
+# MPI Thread Environment: 
+
+
+# Calling sequence was: 
+
+# ../../IMB-MPI1-fj -mem 5 -npmin 110592 -msglen len2.txt Allreduce Reduce Allgather Allgatherv Gather Scatter Alltoall Bcast Barrier 
+
+# Message lengths were user defined
+#
+# MPI_Datatype                   :   MPI_BYTE 
+# MPI_Datatype for reductions    :   MPI_FLOAT 
+# MPI_Op                         :   MPI_SUM  
+# 
+# 
+
+# List of Benchmarks to run:
+
+# Allreduce
+# Reduce
+# Allgather
+# Allgatherv
+# Gather
+# Scatter
+# Alltoall
+# Bcast
+# Barrier
+
+#----------------------------------------------------------------
+# Benchmarking Allreduce 
+# #processes = 110592 
+#----------------------------------------------------------------
+       #bytes #repetitions  t_min[usec]  t_max[usec]  t_avg[usec]
+          128         1000        72.93        83.73        78.89
+          256         1000        73.74        86.93        79.56
+          512         1000        81.09       101.92        89.99
+         1024         1000        88.58       125.35       100.20
+
+#----------------------------------------------------------------
+# Benchmarking Reduce 
+# #processes = 110592 
+#----------------------------------------------------------------
+       #bytes #repetitions  t_min[usec]  t_max[usec]  t_avg[usec]
+          128         1000         2.09        66.01         5.12
+          256         1000         2.13        67.91         5.24
+          512         1000         4.71        71.76         8.42
+         1024         1000         4.72        74.71         8.42
+
+#----------------------------------------------------------------
+# Benchmarking Allgather 
+# #processes = 110592 
+#----------------------------------------------------------------
+       #bytes #repetitions  t_min[usec]  t_max[usec]  t_avg[usec]
+          128           72    141112.16    141129.13    141121.34
+          256           70    145072.66    145087.47    145080.92
+          512           28    358245.03    358263.39    358254.86
+         1024           28    367089.87    367107.74    367099.45
+
+#----------------------------------------------------------------
+# Benchmarking Allgatherv 
+# #processes = 110592 
+#----------------------------------------------------------------
+       #bytes #repetitions  t_min[usec]  t_max[usec]  t_avg[usec]
+          128           76    131505.00    131521.85    131514.36
+          256           74    136034.44    136050.61    136043.28
+          512           28    359829.75    359848.58    359839.68
+         1024           28    371329.37    371348.36    371339.54
+
+#----------------------------------------------------------------
+# Benchmarking Gather 
+# #processes = 110592 
+#----------------------------------------------------------------
+       #bytes #repetitions  t_min[usec]  t_max[usec]  t_avg[usec]
+          128         1000      2151.18      2160.94      2156.40
+          256         1000      2607.35      2616.76      2612.51
+          512         1000      4009.37      4018.34      4014.27
+         1024         1000      7201.52      7210.79      7206.19
+
+#----------------------------------------------------------------
+# Benchmarking Scatter 
+# #processes = 110592 
+#----------------------------------------------------------------
+       #bytes #repetitions  t_min[usec]  t_max[usec]  t_avg[usec]
+          128         1000      2477.79      2496.44      2487.82
+          256           76    132732.40    132751.44    132739.57
+          512           24    426615.62    426640.42    426627.64
+         1024           21    486868.79    486902.54    486884.92
+
+#----------------------------------------------------------------
+# Benchmarking Alltoall 
+# #processes = 110592 
+#----------------------------------------------------------------
+       #bytes #repetitions  t_min[usec]  t_max[usec]  t_avg[usec]
+          128           11    423136.87    899976.23    682140.13
+          256           10   1019546.90   1019594.59   1019570.77
+          512            9   1040897.34   1040951.07   1040923.20
+         1024            7   1431773.04   1431846.56   1431811.93
+
+#----------------------------------------------------------------
+# Benchmarking Bcast 
+# #processes = 110592 
+#----------------------------------------------------------------
+       #bytes #repetitions  t_min[usec]  t_max[usec]  t_avg[usec]
+          128         1000       175.72       192.76       184.74
+          256         1000       175.51       194.19       185.89
+          512         1000       179.45       196.29       188.45
+         1024         1000       180.58       198.59       190.59
+
+#---------------------------------------------------
+# Benchmarking Barrier 
+# #processes = 110592 
+#---------------------------------------------------
+ #repetitions  t_min[usec]  t_max[usec]  t_avg[usec]
+         1000        68.51        68.54        68.53
+
+
+# All processes entering MPI_Finalize
+

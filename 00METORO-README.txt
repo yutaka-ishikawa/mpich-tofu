@@ -36,7 +36,9 @@ $ (cd libfabric; make install >&../log/inst-libfabric.txt)
 # Please copy /home/g9300001/data/mpich-tofu/work/mpich-tofu/mpich-exp
 $ cp -rp /home/g9300001/data/mpich-tofu/work/mpich-tofu/mpich-exp ./
 $ tool/mpich3.4-configure exp ./mpich-exp/ /home/g9300001/data/mpich-tofu
-$ (cd mpich-exp; make V=1 >& ../log/cmp-mpi-exp.txt)
+   ### Edit mpich-exp/src/util/mpir_cvars.c
+   ....
+$ (cd mpich-exp; make clean; make V=1 >& ../log/cmp-mpi-exp.txt)
 $ cd mpich-exp; make install
 
 #############################################################

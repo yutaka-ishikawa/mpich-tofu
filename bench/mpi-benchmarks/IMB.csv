@@ -1,0 +1,25 @@
+tagged,#rack,#node,#procs,eager-alltoall,eager,rndz,comment
+1,	1,	384,	1536,	PASS,	PASS,	PASS,	MPICH-IMB-COLL.4770016.out,	2021/01/03
+1,	3,	1152,	4608,	PASS,	PASS,	PASS,	MPICH-IMB-3-2rack.4770193.out,	2021/01/03
+1,	9,	3456,	55296,	FAIL,	,	,	MPICH-IMB-9rack.4767230.out,	2021/01/04
+0,	9,	3456,	55296,	PASS,	,	,	MPICH-IMB-9rack.4767230.out,	2021/01/03
+0,	9,	3456,	55296,	PASS,	,	,	MPICH-IMB-9rack.4771359.out,	2021/01/04, for confirm
+0,	12,	4608,	73728,	PASS,	,	,	MPICH-IMB-12rack.4767244.out,	2021/01/03
+0,	12,	4608,	18432,	PASS,	,	,	MPICH-IMB-12rack.4767321.out,	2021/01/03
+1,	12,	4608,	18432,	no-start,	--,	--,	MPICH-IMB-12-4-2rack.4771301.out,	2021/01/04
+1,	24,	9216,	36864,	no-start,	--,	--,	MPICH-IMB-24-4-1rack.4771303.out,	2021/01/04
+1,	24,	9216,	36864,	FAIL,	,	,	MPICH-IMB-24-4-1rack.4770236.out,	2021/01/03
+0,	24,	9216,	36864,	PASS,	,	,	MPICH-IMB-24-4-1rack.4767357.out,	2021/01/03
+0,	36,	13824,	55296,	PASS,	,	,	MPICH-IMB-36rack.4767381.out,	2021/01/03
+0,	48,	18432,	73728,	PASS,	,	,	MPICH-IMB-48-4rack.4767417.out+%n.%j.out,	2021/01/03
+1,	48,	18432,	73728,	FAIL,	,	,	MPICH-IMB-48-4rack.4770188.out,	2021/01/04
+0,	72,	27648,	110592,	PASS,	,	,	MPICH-IMB-72-4-1rack.4767974.out, 2021/01/03
+1,	72,	27648,	110592,	FAIL,	,	,	MPICH-IMB-72-4-1rack.4767974.out, 2021/01/03
+
+4608	
+	large message does not work
+TAGGED: 1
+	3 rack does work ()
+	24rack 24 does not work
+
+PingPong, PingPing, Sendrecv, Exchange, Allreduce, Reduce, Reduce_local, Reduce_scatter, Reduce_scatter_block, Allgather, Allgatherv, Gather, Gatherv, Scatter, Scatterv, Alltoall, Alltoallv, Bcast, Barrier

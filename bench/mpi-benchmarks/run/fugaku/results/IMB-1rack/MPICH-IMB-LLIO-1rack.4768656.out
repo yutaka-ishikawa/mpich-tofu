@@ -1,0 +1,119 @@
+[IMB-MPI1]: 1
+
+[mpich_exec]: 1
+
+[libmpi.so]: 1
+
+[libmpi.so.0]: 1
+
+[libmpi.so.0.0.0]: 1
+
+[libmpi.so.12]: 1
+
+[libutf.so]: 1
+
+Testing lliotransfer
+LD_LIBRARY_PATH =  /home/g9300001/u93027/mpich-tofu/lib:/opt/FJSVxtclanga/tcsds-1.2.28a/lib64
+TOFU_NAMED_AV =  1
+UTF_MSGMODE   =  0 (0: Eager, 1: Rendezous)
+UTF_TRANSMODE =  1 (0: Chained, 1: Aggressive)
+UTF_DEBUG     =  0x200
+MPIR_CVAR_CH4_OFI_ENABLE_TAGGED      =  0
+MPIR_CVAR_CH4_OFI_EAGER_MAX_MSG_SIZE =  8388608
+MPIR_CVAR_REDUCE_INTRA_ALGORITHM     =  binomial
+MPIR_CVAR_ALLREDUCE_INTRA_ALGORITHM  =  recursive_doubling
+MPIR_CVAR_ALLTOALL_INTRA_ALGORITHM   =  brucks
+MPIR_CVAR_CH4_OFI_EAGER_MAX_MSG_SIZE =  8388608
+MPIR_CVAR_CH4_OFI_SHORT_SEND_SIZE    =  16384
+[0] UTF_DEBUG: 0x200
+[0] MSG MODE: 0 (0:eager 1:rendezvous)
+[0] MSG_PKTSZ: 256
+[0] MSG_EAGER_PIGBACK_SZ: 12
+[0] MSG_EAGER_SIZE: 236
+[0] MSG_EGRCNTG_SZ: 30208
+[0] MSG_FI_EAGER_PIGBACK_SZ: 4
+[0] MSG_FI_EAGER_SIZE: 228
+[0] MSG_FI_EAGER_INPLACE_SZ: 30200
+[0] COM_EGR_PKTSZ: 128 (30208)
+[0] UTF_INJECT_COUNT_MAX: 4
+[0] UTF_ASEND_COUNT_MAX: 1
+[0] UTF_SEND_REQ_COUNT: 1024
+[0] UTF_RECV_REQ_COUNT: 1024
+[0] sizeof(utf_egr_rbuf):   32.000 MiB
+[0] sizeof(utf_packet): 256 B
+==== Capability set configuration ====
+libfabric provider: tofu
+MPIDI_OFI_ENABLE_AV_TABLE: 0
+MPIDI_OFI_ENABLE_SCALABLE_ENDPOINTS: 1
+MPIDI_OFI_ENABLE_SHARED_CONTEXTS: 0
+MPIDI_OFI_ENABLE_MR_SCALABLE: 0
+MPIDI_OFI_ENABLE_MR_VIRT_ADDRESS: 1
+MPIDI_OFI_ENABLE_MR_ALLOCATED: 0
+MPIDI_OFI_ENABLE_MR_PROV_KEY: 1
+MPIDI_OFI_ENABLE_TAGGED: 0
+MPIDI_OFI_ENABLE_AM: 1
+MPIDI_OFI_ENABLE_RMA: 1
+MPIDI_OFI_ENABLE_ATOMICS: 0
+MPIDI_OFI_FETCH_ATOMIC_IOVECS: 1
+MPIDI_OFI_ENABLE_DATA_AUTO_PROGRESS: 0
+MPIDI_OFI_ENABLE_CONTROL_AUTO_PROGRESS: 0
+MPIDI_OFI_ENABLE_PT2PT_NOPACK: 1
+MPIDI_OFI_ENABLE_HMEM: 0
+MPIDI_OFI_NUM_AM_BUFFERS: 8
+MPIDI_OFI_CONTEXT_BITS: 20
+MPIDI_OFI_SOURCE_BITS: 0
+MPIDI_OFI_TAG_BITS: 31
+MPIDI_OFI_global.max_short_send: 16384
+======================================
+MAXIMUM SUPPORTED RANKS: 4294967296
+MAXIMUM TAG: 2147483648
+======================================
+#------------------------------------------------------------
+#    Intel(R) MPI Benchmarks 2019 Update 6, MPI-1 part    
+#------------------------------------------------------------
+# Date                  : Sun Jan  3 17:58:11 2021
+# Machine               : aarch64
+# System                : Linux
+# Release               : 4.18.0-193.13.2.el8_2.aarch64
+# Version               : #1 SMP Mon Jul 13 19:19:04 EDT 2020
+# MPI Version           : 3.1
+# MPI Thread Environment: 
+
+
+# Calling sequence was: 
+
+# ../../IMB-MPI1 -mem 5 -npmin 1536 Alltoall 
+
+# Minimum message length in bytes:   0
+# Maximum message length in bytes:   4194304
+#
+# MPI_Datatype                   :   MPI_BYTE 
+# MPI_Datatype for reductions    :   MPI_FLOAT 
+# MPI_Op                         :   MPI_SUM  
+# 
+# 
+
+# List of Benchmarks to run:
+
+# Alltoall
+
+#----------------------------------------------------------------
+# Benchmarking Alltoall 
+# #processes = 1536 
+#----------------------------------------------------------------
+       #bytes #repetitions  t_min[usec]  t_max[usec]  t_avg[usec]
+            0         1000         0.24         0.34         0.29
+            1         1000       474.90       496.47       489.06
+            2         1000       534.00       576.21       550.78
+            4         1000       704.58       784.86       736.30
+            8         1000       998.71      1147.96      1057.13
+           16         1000      1500.83      1785.78      1590.86
+           32         1000      1772.77      1846.04      1804.05
+           64         1000      2678.19      2869.56      2753.56
+          128         1000      4529.71      4906.62      4711.44
+          256         1000      5454.91      6974.21      6408.78
+          512          761      9704.83     13101.87     11923.92
+         1024          391     18528.52     25691.95     23112.76
+         2048          192     36885.77     51007.65     45732.78
+         4096           98     71931.28    101598.53     90691.05
+         8192           49    143148.75    202843.93    180108.31
