@@ -87,6 +87,8 @@ date
 	--prefix=$INSTDIR \
 	$CONFIG_OPTIONS \
 	--enable-tofu=yes \
+	--enable-direct=tofu \
+	--enable-embedded \
 	--enable-shared \
 	>../$LOGDIR/cnf-libfabric.txt 2>&1)
 date
