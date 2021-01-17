@@ -6,6 +6,8 @@
 #PJM -o "results/IMB-coll/%n.%j.out"
 #PJM -e "results/IMB-coll/%n.%j.err"
 #
+#	PJM -L "node=4"
+#	PJM -L "node=256"
 #	PJM -L "node=32"
 #	PJM -L "node=64"
 #	PJM -L "node=128"
@@ -14,11 +16,15 @@
 #PJM --mpi "max-proc-per-node=4"
 #	PJM --mpi "max-proc-per-node=8"
 #	PJM --mpi "max-proc-per-node=16"
+#	PJM --mpi "max-proc-per-node=32"
 #	PJM --mpi "max-proc-per-node=48"
 #	PJM -L "elapse=00:0:40"
-#PJM -L "elapse=00:20:00"
+#PJM -L "elapse=00:10:00"
+#	PJM -L "elapse=00:20:00"
 #	PJM -L "elapse=00:10:00"
-#PJM -L "rscunit=rscunit_ft01,rscgrp=eap-llio"
+#	PJM -L "rscunit=rscunit_ft01,rscgrp=dvsys-mck1,jobenv=linux2"
+#PJM -L "rscunit=rscunit_ft01,rscgrp=dvsys-mck2,jobenv=linux2"
+#	PJM -L "rscunit=rscunit_ft01,rscgrp=eap-llio"
 #	PJM -L "rscunit=rscunit_ft01,rscgrp=eap-llio"
 #PJM -L proc-core=unlimited
 #------- Program execution -------#
@@ -40,13 +46,26 @@ export UTF_ASEND_COUNT=1	# turn on 2021/01/02
 #BENCH="Allreduce Reduce Allgather Allgatherv Gather Gatherv Scatter Alltoall Alltoallv Bcast Barrier"
 
 OKBENCH="Allreduce Reduce Allgather Allgatherv Gather Scatter Alltoall Bcast Barrier" # it takes 14:56
-#COLLBENCH="Alltoall"	# 384procs takes 2:55 
+COLLBENCH="Alltoall"	# 384procs takes 2:55 
 #COLLBENCH="Alltoall"	# 1536procs takes 3:47
 #COLLBENCH="Allreduce"	# 1536procs takes 0:27
 #COLLBENCH="Allgather"	# 1536procs takes 0:27
-NP=1536
+#NP=1536
 #NP=384
-mpich_exec $MPIOPT ../../IMB-MPI1 -mem 6.5 -npmin $NP -msglen len5.txt $OKBENCH
+#NP=512  
+#NP=128 # 00:20
+#NP=32
+#NP=4
+#MEM=0.9
+
+# Alltoall: len4, 256/22, 1024/27, 1536/40
+COLLBENCH="Alltoall"	# 384procs
+MEM=6.5
+#NP=1024
+NP=1536
+
+mpich_exec $MPIOPT ../../IMB-MPI1 -mem $MEM -npmin $NP -msglen len4.txt $COLLBENCH
+#mpich_exec $MPIOPT ../../IMB-MPI1 -mem $MEM -npmin $NP -msglen len5.txt $OKBENCH
 exit
 
 #mpich_exec $MPIOPT ../../IMB-MPI1 -mem 6.5 -npmin $NP $OKBENCH
