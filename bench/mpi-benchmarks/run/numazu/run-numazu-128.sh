@@ -1,15 +1,15 @@
 #!/bin/bash
 #------ pjsub option --------#
-#PJM -N "MPICH-IMB256" # jobname
+#PJM -N "MPICH-IMB128" # jobname
 #PJM -S		# output statistics
 #PJM --spath "results/%n.%j.stat"
 #PJM -o "results/%n.%j.out"
 #PJM -e "results/%n.%j.err"
 #
 #PJM -L "node=8:noncont"
-#PJM --mpi "max-proc-per-node=32"
-#PJM -L "elapse=00:15:30"
-#	PJM -L "elapse=00:17:50"
+#PJM --mpi "max-proc-per-node=16"
+#PJM -L "elapse=00:03:30"
+#	PJM -L "elapse=00:15:50"
 #PJM -L "rscunit=rscunit_ft02,rscgrp=dvsys-all,jobenv=linux"
 #	PJM -L "rscunit=rscunit_ft02,rscgrp=dvsys-mck2_and_spack2,jobenv=linux"
 #	PJM -L "rscunit=rscunit_ft02,rscgrp=dvsys-spack2,jobenv=linux"
@@ -44,18 +44,13 @@ export UTF_ASEND_COUNT=1	#
 #
 # PingPong PingPing Sendrecv Exchange: no more room because processes not participating benchmarking waits for
 # Reduce_scatter, Gatherv: no more room using 256 procs
-# Scatterv: no more room using 256 procs with other benchmarks
-# Alltoallv:  no more room using 256 procs with other benchmarks
 #BENCH="Allreduce Reduce Allgather Allgatherv Gather Scatter Scatterv Alltoall Alltoallv Bcast Barrier"
-#NP=128 # 41 sec for Scatter
+#BENCH="Alltoall"
+#BENCH="Scatterv"
+BENCH="Allgather"
 
-#
-# NP = 256, 10:38 ad 10:10 for OKBENCH using TAGGED and AM
-#OKBENCH="Allreduce Reduce Allgather Allgatherv Gather Scatter Alltoall Bcast Barrier"
-OKBENCH="Allreduce Reduce Allgather Allgatherv Gather Scatter Alltoall Bcast Barrier"
-
-MEM=0.9	# MEM must be more than 1.005, but 32 ppn cannot allocate such size
-NP=256	# 50 sec for Scatter
-echo mpich_exec -n $NP $MPIOPT ../../IMB-MPI1 -npmin $NP -mem $MEM $OKBENCH #
-mpich_exec -n $NP $MPIOPT ../../IMB-MPI1 -npmin $NP -mem $MEM $OKBENCH	#
+MEM=1.5	# MEM must be more than 1.005, but 32 ppn cannot allocate such size
+NP=128
+echo mpich_exec -n $NP $MPIOPT ../../IMB-MPI1 -npmin $NP -mem $MEM $BENCH #
+mpich_exec -n $NP $MPIOPT ../../IMB-MPI1 -npmin $NP -mem $MEM $BENCH	#
 exit
