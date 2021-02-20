@@ -3,7 +3,7 @@ SRC=$1
 DIR=$2
 
 MPICH_SRC=${SRC:-./mpich-exp-native}
-INSTDIR=${DIR:-$HOME/mpich-tofu}
+INSTDIR=${DIR:-$HOME/mpich-tofu-native}
 
 LOGDIR=log
 CUR_DIR=`pwd`
