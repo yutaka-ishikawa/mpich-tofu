@@ -1,0 +1,93 @@
+#!/bin/bash
+SRC=$1
+DIR=$2
+
+MPICH_SRC=${SRC:-./mpich-exp-gcc}
+INSTDIR=${DIR:-$HOME/mpich-tofu}
+
+LOGDIR=log
+CUR_DIR=`pwd`
+
+echo "option=" $OPTION "dir=" $DIR "instdir=" $INSTDIR "mpich_src=" $MPICH_SRC "logdir=" $LOGDIR
+
+#export MPILIBNAME=mpich
+export LD_LIBRARY_PATH=$INSTDIR/lib:$LD_LIBRARY_PATH
+
+export LIBS="-ldl -lrt -lutf -ltofutop -ltofucom -lpmix"
+export CC=/opt/FJSVxos/devkit/aarch64/bin/aarch64-linux-gnu-gcc
+export CXX=/opt/FJSVxos/devkit/aarch64/bin/aarch64-linux-gnu-g++
+export LD=/opt/FJSVxos/devkit/aarch64/bin/aarch64-linux-gnu-ld
+export CPPFLAGS=-I/opt/FJSVxos/devkit/aarch64/rfs/usr/include/FJSVtcs/ple
+export CFLAGS="-O3 -DFABRIC_DIRECT"
+
+export F77=/opt/FJSVxos/devkit/aarch64/bin/aarch64-linux-gnu-gfortran
+export FC=/opt/FJSVxos/devkit/aarch64/bin/aarch64-linux-gnu-gfortran
+export CPPFLAGS=-I/opt/FJSVxos/devkit/aarch64/rfs/usr/include/FJSVtcs/ple
+export CFLAGS="-O3 -DFABRIC_DIRECT -DUTF_DEBUG -g"
+export LDFLAGS="-L$INSTDIR/lib"
+
+XX_CONF_PMIX="--with-pmix=/opt/FJSVxos/devkit/aarch64/rfs/usr/lib/FJSVtcs/ple/lib64 --with-pmix-include=/opt/FJSVxos/devkit/aarch64/rfs/usr/include/FJSVtcs/ple --with-pm=no"
+
+echo CC=$CC
+echo LD=$LD
+echo LDFLAGS=$LDFLAGS
+echo LD_LIBRARY_PATH=$LD_LIBRARY_PATH
+echo INSTDIR=$INSTDIR
+echo LIBS=$LIBS
+
+if [ ! -d $LOGDIR ]; then
+    mkdir $LOGDIR
+fi
+
+XX_CONF_HOST=--host=aarch64-unknown-linux-gnu
+echo "Experiment"
+XX_CONF_PERF_ARGS=" \
+	--enable-fast=all \
+	--enable-error-checking=no \
+	--enable-g=none \
+	--disable-debuginfo \
+	--enable-threads=single \
+	--without-ch4-shmmods \
+	--with-device=ch4:ofi:tofu \
+	--with-libfabric=embedded \
+	--enable-direct=tofu \
+	--enable-tofu=yes \
+	--with-ch4-ofi-direct-provider=tofu \
+	"
+
+date
+(cd $MPICH_SRC; export ac_cv_func_malloc_0_nonnull=yes; ./configure \
+	$XX_CONF_HOST \
+	--config-cache \
+	--prefix=${INSTDIR} \
+	--enable-shared \
+	\
+	--enable-fortran=yes \
+	--with-cross=../tool/cross/cross-fugaku-fcc \
+	--enable-cxx \
+	--enable-romio=no \
+	\
+	--with-mpl-prefix=embedded \
+	--with-openpa-prefix=embedded \
+	--with-hwloc-prefix=/lib64/ \
+	--with-device=ch4:ofi \
+	$XX_CONF_PMIX \
+	\
+	$XX_CONF_PERF_ARGS \
+	\
+	--with-libfabric-include=$INSTDIR/include	\
+ 	--with-libfabric-lib=$INSTDIR/lib	\
+	\
+	--without-ch4-shmmods \
+        --disable-ofi-domain \
+	\
+	--with-wrapper-dl-type=none \
+	MPICHLIB_CFLAGS=-O3 MPICHLIB_FFLAGS=-O3 MPICHLIB_CXXFLAGS=-O3 MPICH_MPICC_LIBS="-lutf -lpmix -ldl -lrt -ltofutop -ltofucom" \
+	MPICH_MPICXX_LIBS="-lutf -lpmix -ldl -lrt -ltofutop -ltofucom" \
+	MPICH_MPIF77_LIBS="-lutf -lpmix -ldl -lrt -ltofutop -ltofucom" \
+	MPICH_MPIFORT_LIBS="-lutf -lpmix -ldl -lrt -ltofutop -ltofucom" \
+	>../$LOGDIR/cnf-mpi-gcc.txt 2>&1)
+
+date
+
+exit 0

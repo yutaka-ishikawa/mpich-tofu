@@ -12,13 +12,14 @@ CUR_DIR=`pwd`
 
 echo "option=" $OPTION "dir=" $DIR "instdir=" $INSTDIR "mpich_src=" $MPICH_SRC "logdir=" $LOGDIR
 
+#export MPILIBNAME=mpich
 export LD_LIBRARY_PATH=$INSTDIR/lib:$LD_LIBRARY_PATH
 
 #export LIBS="-ldl -lrt -lutf -ltofutop -ltofucom -lpmix -lfabric"
 export LIBS="-ldl -lrt -lutf -ltofutop -ltofucom -lpmix"
 ###export LIBS="-ldl -lrt -ltofutop -ltofucom -lpmix-wrap -lfabric"
 case `hostname` in
-    fn01sv*|ea-login01)
+    fn01sv*|ea-login01|ea-login02)
 #	export LIBS="-ldl -lrt -lutf -ltofutop -ltofucom -lpmix -lfabric"
 	export LIBS="-ldl -lrt -lutf -ltofutop -ltofucom -lpmix"
 	export CC=/opt/FJSVxos/devkit/aarch64/bin/aarch64-linux-gnu-gcc
