@@ -1,3 +1,59 @@
+	An installation example for Fujitsu compiler on Fugaku environment
+	   			    	    	     	2021/02/22
+(1)
+    $ cd $HOME
+    $ mkdir work
+    $ cd work
+    $ git clone git@git.sys.r-ccs.riken.jp:software/mpich-tofu
+    $ cd mpich-tofu
+    $ git clone git@git.sys.r-ccs.riken.jp:software/utf
+    $ cd utf/src
+    $ export UTF_ARCH=fugaku-fccpx
+    $ make clean; make
+    $ make INSTDIR=$HOME/mpich-tofu-fc install
+(2)
+   Copy mpich-exp to mpich-exp-fc under $HOME/work/mpich-tofu
+   Edit src/include/mpir_op_util.h
+     See patch file.
+(3)
+    $ cd $HOME/work/mpich-tofu/
+    $ ./tool/mpich3.4-fc-configure 
+    # It takes about 5 minutes
+    # Look at the following file to check if the configure has successfuly
+    # finished.
+    #	$HOME/work/mpich-tofu/log/cnf-mpi-fc.txt
+(4) Edit mpich-exp-fc/libtool
+    1) Search for "TAG CONFIG: FC"
+    2) Search again for "pic_flag"
+    3) Relace it with the following one:
+         pic_flag="-fPIC"
+    4) Search for "wl" and replace it with the folloing one:
+         wl="-Wl,"
+    5) Search for "TAG CONFIG: F77" and repeat 2) through 4)
+    6) Search for fjhpctag.o and remove it.
+	# Two places.
+(3) Compile
+    $ (cd mpich-exp-fc; make clean; make V=1 >& ../log/cmp-mpi-fc.txt)
+    # It takes about 1 hour 30 minutes.
+    # Look at the following file to check if the configure has successfuly
+    # finished.
+    #	$HOME/work/mpich-tofu/log/cmp-mpi-fc.txt
+(4) Install
+    $ (cd mpich-exp-fc; make V=1 install)
+(5) Compile test programs
+    $ (cd mpich-exp-fc/test; make V=1 >& ../../log/cmp-mpi-fc-test.txt)
+    # It takes about 10 minutes.
+    # Error Occurs in test/commands/rtest.c 
+(6) Setup mpi_vbg
+    $ cd $HOME/work/mpich-tofu/utf/src/mpi_vbg
+    # be sure mpicc is ....
+    $ make clean; make
+    $ make INSTDIR=$HOME/mpich-tofu-fc install
+
+(7) set MPICH_HOME
+    $ export MPICH_HOME=$HOME/mpich-tofu-fc/
+
+#####################################################################
 	An installation example on Numazu environment	2020/01/06
 
 ##### download modules, initial setting, and utf installation
