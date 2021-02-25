@@ -1,6 +1,6 @@
 #!/bin/bash
 #------ pjsub option --------#
-#PJM -N "MPICH-IMB-12rack" # jobname
+#PJM -N "MPICH-IMB-12R-CHN" # jobname
 #PJM -S
 #PJM --spath "results/IMB-12rack/%n.%j.stat"
 #PJM -o "results/IMB-12rack/%n.%j.out"
@@ -34,30 +34,16 @@ export UTF_INFO=0x1
 #export FI_LOG_LEVEL=Debug
 ##export UTF_DEBUG=0x4200 # DLEVEL_ERR|DLEVEL_STATISTICS  
 export UTF_DEBUG=0x200 # DLEVEL_ERR
-export UTF_INJECT_COUNT=1
-export UTF_ASEND_COUNT=1	# turn on 20210102
-export UTF_DEBUG=0x10200	# showing initializing step and DLELEL_ERR
-
-#BENCH="Allreduce Reduce Allgather Allgatherv Gather Gatherv Scatter Alltoall Alltoallv Bcast Barrier"
-#BENCH="Gather Gatherv Scatter Alltoall Alltoallv Bcast Barrier"
-#OKBENCH="Allreduce Reduce Allgather Allgatherv Gather Scatter Alltoall Bcast Barrier" #
-##OKBENCH="Alltoall" # OK, step3-4=67.521144sec, elapse=06:42
-
-########
-#  00:14:38 (878), 4974571, 2021/02/01
-########
-
-OKBENCH1="Allreduce Reduce Alltoall Bcast Barrier"
-OKBENCH2="Allgather Allgatherv Gather Scatter"
+#export UTF_INJECT_COUNT=1
+#export UTF_ASEND_COUNT=1	# turn on 2021/01/02
+#export UTF_DEBUG=0x10200	# showing initializing step and DLELEL_ERR
+export UTF_TRANSMODE=0		# Chained mode
+#export UTF_ARMA_COUNT=2	# must be defined in mpich.env 2021/02/01
 
 NP=16384
 LENFILE=len-gather-16384.txt
 MEM=7
 
-echo "mpich_exec -n $NP $MPIOPT ../../IMB-MPI1 -npmin $NP -mem $MEM $OKBENCH1"
-mpich_exec -n $NP $MPIOPT ../../IMB-MPI1 -npmin $NP -mem $MEM $OKBENCH1 #
-echo
-echo
-echo "mpich_exec -n $NP $MPIOPT ../../IMB-MPI1 -npmin $NP -mem $MEM -msglen $LENFILE $OKBENCH2"
-mpich_exec -n $NP $MPIOPT ../../IMB-MPI1 -npmin $NP -mem $MEM -msglen $LENFILE $OKBENCH2 #
+echo "mpich_exec -n $NP $MPIOPT ../../IMB-MPI1 -npmin $NP -mem $MEM -msglen $LENFILE
+mpich_exec -n $NP $MPIOPT ../../IMB-MPI1 -npmin $NP -mem $MEM -msglen $LENFILE
 exit

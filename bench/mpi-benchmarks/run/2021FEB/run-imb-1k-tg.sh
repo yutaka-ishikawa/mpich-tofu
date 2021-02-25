@@ -45,7 +45,7 @@ OKBENCH3="Scatterv Gatherv"
 #############
 
 NP=1024
-LENFILE=len-gather-1024.txt
+LENFILE=len/len-gather-1024.txt
 MEM=7
 
 run_bench "$OKBENCH1" $NP $MEM $LENFILE

@@ -1,0 +1,11 @@
+diff --git a/src/binding/fortran/use_mpi_f08/mpi_c_interface.f90 b/src/binding/fortran/use_mpi_f08/mpi_c_interface.f90
+index 52b24bc..6cd077f 100644
+--- a/src/binding/fortran/use_mpi_f08/mpi_c_interface.f90
++++ b/src/binding/fortran/use_mpi_f08/mpi_c_interface.f90
+@@ -7,5 +7,5 @@ module mpi_c_interface
+     use mpi_c_interface_types
+     use mpi_c_interface_nobuf
+     use mpi_c_interface_cdesc
+-    use mpi_c_interface_glue
++!    use mpi_c_interface_glue
+ end module mpi_c_interface

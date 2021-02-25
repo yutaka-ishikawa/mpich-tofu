@@ -6,8 +6,8 @@
 #PJM -o "results/IMB-72rack/%n.%j.out"
 #PJM -e "results/IMB-72rack/%n.%j.err"
 #
-#	PJM -L "node=27648"
-#PJM -L "node=24x24x48:strict"
+#PJM -L "node=27648"
+#	PJM -L "node=24x24x48:strict"
 #	PJM --mpi "max-proc-per-node=1"
 #PJM --mpi "max-proc-per-node=4"
 #	PJM --mpi "max-proc-per-node=8"
@@ -15,7 +15,7 @@
 #	PJM --mpi "max-proc-per-node=48"
 #	PJM -L "elapse=00:0:40"
 #	PJM -L "elapse=00:50:00"
-#PJM -L "elapse=00:20:00"
+#PJM -L "elapse=00:30:00"
 #	PJM -L "elapse=00:3:00"
 #PJM -L "rscunit=rscunit_ft01,rscgrp=eap-large"
 #	PJM -L "rscunit=rscunit_ft01,rscgrp=eap-llio"
@@ -31,34 +31,29 @@ export UTF_INFO=0x1
 #export FI_LOG_PROV=tofu
 #export FI_LOG_LEVEL=Debug
 export UTF_DEBUG=0x200 # DLEVEL_ERR
-export UTF_INJECT_COUNT=1
-export UTF_ASEND_COUNT=1	# turn on 20210102
-export UTF_DEBUG=0x10000	# showing initializing step
+#export UTF_INJECT_COUNT=1
+#export UTF_ASEND_COUNT=1	# turn on 2021/01/02
+#export UTF_DEBUG=0x10000	# showing initializing step
 
-#
-# IMB: PingPong, PingPing, Sendrecv, Exchange, Allreduce, Reduce, Reduce_local, Reduce_scatter, Reduce_scatter_block
-#      Allgather, Allgatherv, Gather, Gatherv, Scatter, Scatterv, Alltoall, Alltoallv, Bcast, Barrier
-#
-## PASS: Allreduce Reduce Allgather Allgatherv Gather Scatter Alltoall Bcast Barrier
-## NO ROOM: Gatherv Alltoallv Reduce_scatter
-## DEADLOCK ?: Reduce_local Reduce_scatter_block
-##BENCH="Allreduce Reduce Allgather Allgatherv Gather Gatherv Scatter Alltoall Alltoallv Bcast Barrier"
-#OKBENCH="Allreduce Reduce Allgather Allgatherv Gather Scatter Alltoall Bcast Barrier"
-OKBENCH="Alltoall"
+#BENCH="Allreduce Reduce Allgather Allgatherv Gather Gatherv Scatter Alltoall Alltoallv Bcast Barrier"
+#BENCH="Gather Gatherv Scatter Alltoall Alltoallv Bcast Barrier"
+#OKBENCH="Allreduce Reduce Allgather Allgatherv Gather Scatter Alltoall Bcast Barrier" #
+##OKBENCH="Alltoall" # OK, step3-4=67.521144sec, elapse=06:42
 
-#NP=27648 # with len2.txt + Alltoall 3:46
-NP=110592 # with len3.txt + Alltoall ??
+OKBENCH1="Allreduce Reduce Alltoall Bcast Barrier"
+OKBENCH2="Allgather Allgatherv Gather Scatter"
 
-echo "**** MPICH TEST ****"
-echo "mpich_exec " $MPIOPT "../../IMB-MPI1 -mem 5 -npmin " $NP "-msglen len3.txt " $OKBENCH
-mpich_exec $MPIOPT ../../IMB-MPI1 -mem 5 -npmin $NP -msglen len3.txt $OKBENCH #
+###
+### 110592 closet power of 2 is 65536, This script should be skiiped
+###
+NP=110592
+LENFILE=len-gather-65536.txt
+MEM=7
 
-exit
-#echo "mpich_exec " $MPIOPT "../../IMB-MPI1 -mem 5 -npmin " $NP "-msglen len2.txt " $OKBENCH
-##mpich_exec $MPIOPT ../../IMB-MPI1 -mem 5 -npmin $NP -msglen len2.txt $OKBENCH #
-
-#mpich_exec $MPIOPT ../../IMB-MPI1 -mem 8.1 -npmin $NP -msglen len2.txt $OKBENCH #
-#mpich_exec $MPIOPT ../../IMB-MPI1 -mem 8.1 -npmin $NP -msglen len2.txt $BENCH #
-#mpich_exec $MPIOPT ../../IMB-MPI1 -mem 8.1 -npmin $NP -msglen len2.txt Alltoall #
-
+echo "mpich_exec -n $NP $MPIOPT ../../IMB-MPI1 -npmin $NP -mem $MEM $OKBENCH1"
+mpich_exec -n $NP $MPIOPT ../../IMB-MPI1 -npmin $NP -mem $MEM $OKBENCH1 #
+echo
+echo
+echo "mpich_exec -n $NP $MPIOPT ../../IMB-MPI1 -npmin $NP -mem $MEM -msglen $LENFILE $OKBENCH2"
+mpich_exec -n $NP $MPIOPT ../../IMB-MPI1 -npmin $NP -mem $MEM -msglen $LENFILE $OKBENCH2 #
 exit

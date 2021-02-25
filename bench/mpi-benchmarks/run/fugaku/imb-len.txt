@@ -1,0 +1,5 @@
+#
+# 1048576: max size in Allgatherv with 1024 procs
+4
+1048576
+

@@ -1,6 +1,6 @@
 #!/bin/bash
 #------ pjsub option --------#
-#PJM -N "MPICH-IMB-1rack" # jobname
+#PJM -N "MPICH-IMB-1rack-TAGGED" # jobname
 #PJM -S
 #PJM --spath "results/IMB-1rack/%n.%j.stat"
 #PJM -o "results/IMB-1rack/%n.%j.out"
@@ -15,12 +15,13 @@
 #	PJM --mpi "max-proc-per-node=8"
 #	PJM --mpi "max-proc-per-node=16"
 #	PJM --mpi "max-proc-per-node=48"
-#PJM -L "elapse=00:15:40"
+#PJM -L "elapse=00:10:40"
+#	PJM -L "elapse=00:50:40"
 #	PJM -L "elapse=00:30:00"
 #	PJM -L "elapse=00:10:00"
 #	PJM -L "rscunit=rscunit_ft01,rscgrp=dvsys-mck1,jobenv=linux2"
-#PJM -L "rscunit=rscunit_ft01,rscgrp=dvsys-mck2,jobenv=linux2"
-#	PJM -L "rscunit=rscunit_ft01,rscgrp=eap-small"
+#	PJM -L "rscunit=rscunit_ft01,rscgrp=dvsys-mck2,jobenv=linux2"
+#PJM -L "rscunit=rscunit_ft01,rscgrp=eap-small"
 #	PJM -L "rscunit=rscunit_ft01,rscgrp=eap-llio"
 #PJM -L proc-core=unlimited
 #------- Program execution -------#
@@ -35,10 +36,10 @@ export UTF_INFO=0x1
 #export FI_LOG_LEVEL=Debug
 ##export UTF_DEBUG=0x4200 # DLEVEL_ERR|DLEVEL_STATISTICS  
 export UTF_DEBUG=0x200 # DLEVEL_ERR
-#export UTF_INJECT_COUNT=1
-export UTF_INJECT_COUNT=4	# This works
-export UTF_ASEND_COUNT=1	# turn on 2021/01/02
-export UTF_ARMA_COUNT=2
+#export UTF_ASEND_COUNT=1	# turn on 2021/01/02
+export UTF_TRANSMODE=0		# Chained mode
+export UTF_ARMA_COUNT=2		# must be defined in mpich.env 2021/02/01
+export MPIR_CVAR_CH4_OFI_ENABLE_TAGGED=1
 
 #BENCH="Allreduce Reduce Allgather Allgatherv Gather Gatherv Scatter Alltoall Alltoallv Bcast Barrier"
 #BENCH="Gather Gatherv Scatter Alltoall Alltoallv Bcast Barrier"
@@ -59,17 +60,35 @@ export UTF_ARMA_COUNT=2
 # Scatter:  address error in 2097152 byte on 2021/01/14, MPICH-IMB-1rack.4849213.out
 # Alltoall: no more RMA in 16384 byte on 2021/01/14
 #
-#OKBENCH="Allreduce Reduce Allgather Allgatherv Gather Scatter Alltoall Bcast Barrier"
-OKBENCH="Scatter"
-#ERRBENCH="AllGather"
-#ERRBENCH="AllGatherv"	# 1:06 with len-gather.txt on 1024 procs
-ERRLENFILE=len-gather.txt
 
-#NP=18432
-NP=1536
+NP=1024
+LENFILE=len-gather-1024.txt
+MEM=7
+BENCH="Gatherv Scatter Scatterv Alltoall Alltoallv Bcast Barrier"
+
+echo "mpich_exec -n $NP $MPIOPT ../../IMB-MPI1 -npmin $NP -mem $MEM $BENCH"
+mpich_exec -n $NP $MPIOPT ../../IMB-MPI1 -npmin $NP -mem $MEM $BENCH
+exit
+
+
+OKBENCH1="Allreduce Reduce Alltoall Bcast Barrier"
+OKBENCH2="Allgather Allgatherv Gather Scatter"
+
+NP=1024
+LENFILE=len-gather-1024.txt
 MEM=7
 
-mpich_exec $MPIOPT ../../IMB-MPI1 -npmin $NP -mem $MEM -msglen $ERRLENFILE $OKBENCH #
+echo "mpich_exec -n $NP $MPIOPT ../../IMB-MPI1 -npmin $NP -mem $MEM $OKBENCH1"
+mpich_exec -n $NP $MPIOPT ../../IMB-MPI1 -npmin $NP -mem $MEM $OKBENCH1 #
+echo
+echo
+echo "mpich_exec -n $NP $MPIOPT ../../IMB-MPI1 -npmin $NP -mem $MEM -msglen $LENFILE $OKBENCH2"
+mpich_exec -n $NP $MPIOPT ../../IMB-MPI1 -npmin $NP -mem $MEM -msglen $LENFILE $OKBENCH2 #
+exit
+
+#ERRBENCH="AllGatherv"	# 1:06 with len-gather.txt on 1024 procs
+ERRLENFILE=len-gather.txt
+#mpich_exec $MPIOPT ../../IMB-MPI1 -npmin $NP -mem $MEM -msglen $ERRLENFILE $OKBENCH #
 exit
 #mpich_exec $MPIOPT ../../IMB-MPI1 -npmin $NP -mem $MEM -msglen $ERRLENFILE $ERRBENCH #
 

@@ -1,6 +1,6 @@
 #!/bin/bash
 #------ pjsub option --------#
-#PJM -N "MPICH-IMB-fj1rack" # jobname
+#PJM -N "FJ" # jobname
 #PJM -S
 #PJM --spath "results/IMB-fj1rack/%n.%j.stat"
 #PJM -o "results/IMB-fj1rack/%n.%j.out"
@@ -14,7 +14,8 @@
 #PJM --mpi "max-proc-per-node=4"
 #	PJM -L "elapse=00:10:00"
 #PJM -L "elapse=00:5:00"
-#PJM -L "rscunit=rscunit_ft01,rscgrp=dvsys-mck2,jobenv=linux2"
+#PJM -L "rscunit=rscunit_ft01,rscgrp=eap-small"
+#	PJM -L "rscunit=rscunit_ft01,rscgrp=dvsys-mck2,jobenv=linux2"
 #	PJM -L "rscunit=rscunit_ft01,rscgrp=eap-small"
 #	PJM -L "rscunit=rscunit_ft01,rscgrp=eap-llio"
 #PJM -L proc-core=unlimited

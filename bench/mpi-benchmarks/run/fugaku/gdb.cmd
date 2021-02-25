@@ -1,0 +1,6 @@
+p utf_info.myrank 
+p tofu_sendrecv_wait_prevsend
+p tofu_sendrecv_wait_prevrecv
+p tofu_sendrecv_wait_send
+p tofu_sendrecv_wait_recv
+quit

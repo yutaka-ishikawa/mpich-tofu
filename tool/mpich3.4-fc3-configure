@@ -2,8 +2,8 @@
 SRC=$1
 DIR=$2
 
-MPICH_SRC=${SRC:-./mpich-exp-native}
-INSTDIR=${DIR:-$HOME/mpich-tofu-native}
+MPICH_SRC=${SRC:-./mpich-exp-fc3}
+INSTDIR=${DIR:-$HOME/mpich-tofu-fc3}
 
 LOGDIR=log
 CUR_DIR=`pwd`
@@ -11,19 +11,20 @@ CUR_DIR=`pwd`
 echo "option=" $OPTION "dir=" $DIR "instdir=" $INSTDIR "mpich_src=" $MPICH_SRC "logdir=" $LOGDIR
 
 #export MPILIBNAME=mpich
+##export LD=/opt/FJSVxos/devkit/aarch64/bin/aarch64-linux-gnu-ld
 export LD_LIBRARY_PATH=$INSTDIR/lib:$LD_LIBRARY_PATH
-export LIBS="-ldl -lrt -lutf -ltofutop -ltofucom -lpmix"
-export CC=fcc
-export CXX=FCC
-export F77=frt
-export FC=frt
-export CPPFLAGS=-I/usr/include/FJSVtcs/ple
+export LIBS="-lgcc -ldl -lrt -lutf -ltofutop -ltofucom -lpmix"
+export CC=fccpx
+export CXX=FCCpx
+export F77=frtpx
+export FC=frtpx
+export CPPFLAGS=-I/opt/FJSVxos/devkit/aarch64/rfs/usr/include/FJSVtcs/ple
 export CFLAGS="-Nclang -O3 -DFABRIC_DIRECT -DUTF_DEBUG -g"
+export FCFLAGS="-fPIC"
+export FFFLAGS="-fPIC"
 export LDFLAGS="-L$INSTDIR/lib"
 
-#/usr/lib/FJSVtcs/ple/lib64/
-#/lib64
-XX_CONF_PMIX="--with-pmix=/lib64 --with-pmix-include=/usr/include/FJSVtcs/ple --with-pm=no"
+XX_CONF_PMIX="--with-pmix=/opt/FJSVxos/devkit/aarch64/rfs/usr/lib/FJSVtcs/ple/lib64 --with-pmix-include=/opt/FJSVxos/devkit/aarch64/rfs/usr/include/FJSVtcs/ple --with-pm=no"
 
 echo CC=$CC
 echo LD=$LD
@@ -36,6 +37,7 @@ if [ ! -d $LOGDIR ]; then
     mkdir $LOGDIR
 fi
 
+XX_CONF_HOST=--host=aarch64-unknown-linux-gnu
 echo "Experiment"
 XX_CONF_PERF_ARGS=" \
 	--enable-fast=all \
@@ -53,11 +55,13 @@ XX_CONF_PERF_ARGS=" \
 
 date
 (cd $MPICH_SRC; export ac_cv_func_malloc_0_nonnull=yes; ./configure \
+	$XX_CONF_HOST \
 	--config-cache \
 	--prefix=${INSTDIR} \
 	--enable-shared \
 	\
-	--enable-fortran=yes \
+	--enable-fortran=all \
+	--with-cross=../tool/cross/cross-fugaku-fcc \
 	--enable-cxx \
 	--enable-romio=no \
 	\
@@ -79,7 +83,8 @@ date
 	MPICHLIB_CFLAGS=-O3 MPICHLIB_FFLAGS=-O3 MPICHLIB_CXXFLAGS=-O3 MPICH_MPICC_LIBS="-lutf -lpmix -ldl -lrt -ltofutop -ltofucom" \
 	MPICH_MPICXX_LIBS="-lutf -lpmix -ldl -lrt -ltofutop -ltofucom" \
 	MPICH_MPIF77_LIBS="-lutf -lpmix -ldl -lrt -ltofutop -ltofucom" \
-	>../$LOGDIR/cnf-mpi-native.txt 2>&1)
+	MPICH_MPIFORT_LIBS="-lutf -lpmix -ldl -lrt -ltofutop -ltofucom" \
+	>../$LOGDIR/cnf-mpi-fc3.txt 2>&1)
 
 date
 

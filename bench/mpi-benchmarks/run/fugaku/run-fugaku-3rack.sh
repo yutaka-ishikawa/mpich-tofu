@@ -12,12 +12,12 @@
 #	PJM -L "node=384"
 #PJM -L "node=1152"
 #	PJM --mpi "max-proc-per-node=1"
-#	PJM --mpi "max-proc-per-node=4"
+#PJM --mpi "max-proc-per-node=4"
 #	PJM --mpi "max-proc-per-node=8"
 #	PJM --mpi "max-proc-per-node=16"
-#PJM --mpi "max-proc-per-node=16"
+#	PJM --mpi "max-proc-per-node=16"
 #	PJM -L "elapse=00:0:40"
-#PJM -L "elapse=00:10:00"
+#PJM -L "elapse=00:30:00"
 #	PJM -L "elapse=00:10:00"
 #PJM -L "rscunit=rscunit_ft01,rscgrp=eap-large"
 #	PJM -L "rscunit=rscunit_ft01,rscgrp=eap-llio"
@@ -34,19 +34,30 @@ export UTF_INFO=0x1
 #export FI_LOG_LEVEL=Debug
 ##export UTF_DEBUG=0x4200 # DLEVEL_ERR|DLEVEL_STATISTICS  
 export UTF_DEBUG=0x200 # DLEVEL_ERR
-export UTF_INJECT_COUNT=1
-export UTF_ASEND_COUNT=1	# turn on 20210102
-export UTF_DEBUG=0x10200	# showing initializing step and DLELEL_ERR
+#export UTF_INJECT_COUNT=1
+#export UTF_ASEND_COUNT=1	# turn on 2021/01/02
+#export UTF_DEBUG=0x10200	# showing initializing step and DLELEL_ERR
 
 #BENCH="Allreduce Reduce Allgather Allgatherv Gather Gatherv Scatter Alltoall Alltoallv Bcast Barrier"
 #BENCH="Gather Gatherv Scatter Alltoall Alltoallv Bcast Barrier"
+##OKBENCH="Allreduce Reduce Allgather Allgatherv Gather Scatter Alltoall Bcast Barrier"
 
-##OKBENCH="Allreduce Reduce Allgather Allgatherv Gather Scatter Alltoall Bcast Barrier" #
-OKBENCH="Alltoall" # OK, step3-4= 1sec, elapse=1:50
+OKBENCH1="Allreduce Reduce Alltoall Bcast Barrier"
+OKBENCH2="Allgather Allgatherv Gather Scatter"
 
-NP=18432
-mpich_exec $MPIOPT ../../IMB-MPI1 -mem 2 -npmin $NP -msglen len2.txt $OKBENCH #
+NP=4096
+LENFILE=len-gather-4096.txt
+MEM=7
+echo "mpich_exec -n $NP $MPIOPT ../../IMB-MPI1 -npmin $NP -mem $MEM $OKBENCH1"
+mpich_exec -n $NP $MPIOPT ../../IMB-MPI1 -npmin $NP -mem $MEM $OKBENCH1 #
+echo
+echo
+echo "mpich_exec -n $NP $MPIOPT ../../IMB-MPI1 -npmin $NP -mem $MEM -msglen $LENFILE $OKBENCH2"
+mpich_exec -n $NP $MPIOPT ../../IMB-MPI1 -npmin $NP -mem $MEM -msglen $LENFILE $OKBENCH2 #
 exit
+
+###########################################################################################
+##OKBENCH="Alltoall" # OK, step3-4= 1sec, elapse=1:50
 #
 #mpich_exec $MPIOPT ../../IMB-MPI1 -mem 8.1 -npmin 18432 $OKBENCH # Memory Exceeds
 #

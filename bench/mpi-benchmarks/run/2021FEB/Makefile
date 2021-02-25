@@ -27,6 +27,8 @@ all:
 	pjsub -L $(N_32K) run-imb-32k-tg.sh; date
 64k-tag:
 	pjsub -L $(N_64K) run-imb-64k-tg.sh; date
+72r-tag:
+	pjsub -L $(N_72R) run-imb-72rack-tg.sh; date
 #
 72r-am:
 	pjsub -L $(N_72R) run-imb-72rack-am.sh; date
