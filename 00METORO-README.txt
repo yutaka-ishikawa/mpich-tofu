@@ -1,5 +1,12 @@
 	An installation example for Fujitsu compiler on Fugaku environment
-	   			    	    	     	2021/02/22
+	   			    	    	     	2021/02/25
+(0) How to use ssh-agent in your local machine
+    $ ssh-agent bash
+    $ ssh-add <private-key-file>
+    $ ssh -A u93XXXX@fugaku.riken.jp
+      # make sure ssh-key is fowarded in the login node
+      $ ssh-add -L
+
 (1)
     $ cd $HOME
     $ mkdir work
@@ -13,8 +20,9 @@
     $ make INSTDIR=$HOME/mpich-tofu-fc install
 (2)
    Copy mpich-exp to mpich-exp-fc under $HOME/work/mpich-tofu
-   Edit src/include/mpir_op_util.h
-     See patch file.
+   Modify src/include/mpir_op_util.h and
+	  src/binding/fortran/use_mpi_f08/mpi_c_interface.f90
+   Apply patch two files under the tool/cross.
 (3)
     $ cd $HOME/work/mpich-tofu/
     $ ./tool/mpich3.4-fc-configure 
@@ -32,6 +40,8 @@
     5) Search for "TAG CONFIG: F77" and repeat 2) through 4)
     6) Search for fjhpctag.o and remove it.
 	# Two places.
+    7) Search for fjhpctag.o and remove this entry.
+	# Two places.
 (3) Compile
     $ (cd mpich-exp-fc; make clean; make V=1 >& ../log/cmp-mpi-fc.txt)
     # It takes about 1 hour 30 minutes.
@@ -46,7 +56,6 @@
     # Error Occurs in test/commands/rtest.c 
 (6) Setup mpi_vbg
     $ cd $HOME/work/mpich-tofu/utf/src/mpi_vbg
-    # be sure mpicc is ....
     $ make clean; make
     $ make INSTDIR=$HOME/mpich-tofu-fc install
 
