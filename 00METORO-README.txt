@@ -1,12 +1,36 @@
+#####################################################################
+	How to build Intel MPI Benchmarks
+	   			    	    	     	2021/02/26
+#####################################################################
+(1) In case of MPICH is built by gcc
+  1) export MPICH_HOME=XXXXX
+  2) (export CC=$MPICH_HOME/bin/mpicc -g; \
+	export CXX=$MPICH_HOME/bin/mpic++; make IMB-MPI1)
+
+(2) In case of MPICH is built by Fujitsu comiler
+  1) export MPICH_HOME=XXXXX
+  2) Using g++ as a backend C++ compiler instead of FCCpx
+   $ (PATH=/opt/FJSVxos/devkit/aarch64/bin/:$PATH; \
+	export MPICH_CXX=aarch64-linux-gnu-g++; \
+	export CC=$MPICH_HOME/bin/mpicc; \
+	export CXX=$MPICH_HOME/bin/mpic++; make IMB-MPI1)
+   # several Fujitsu shared libraries cound not be found in this case, so keeping
+   # all generated object files and relinked by FCCpx
+  3) relink using FCCpx
+   $ rm IMB-MPI1
+   $ (export CC=$MPICH_HOME/bin/mpicc; \
+	export CXX=$MPICH_HOME/bin/mpic++; make IMB-MPI1)
+
+#####################################################################
 	An installation example for Fujitsu compiler on Fugaku environment
 	   			    	    	     	2021/02/25
+#####################################################################
 (0) How to use ssh-agent in your local machine
     $ ssh-agent bash
     $ ssh-add <private-key-file>
     $ ssh -A u93XXXX@fugaku.riken.jp
       # make sure ssh-key is fowarded in the login node
       $ ssh-add -L
-
 (1)
     $ cd $HOME
     $ mkdir work
@@ -64,6 +88,7 @@
 
 #####################################################################
 	An installation example on Numazu environment	2020/01/06
+#####################################################################
 
 ##### download modules, initial setting, and utf installation
 $ EXAMPLE_HOME=/home/users/ea01/share/
