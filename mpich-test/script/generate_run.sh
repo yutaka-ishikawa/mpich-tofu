@@ -131,9 +131,12 @@ gen_batch_testlist()
 			echo -e "\e[1;31m[${FUNCNAME[0]} ERROR]\e[0m: Can't find testlist"
 			exit	
 		fi
+#		local runtests_parm="-srcdir=${srcdir} \
+#			-batchdir=${batchdir} -batch \
+#			-tests=${testfile} -mpiexec=mpiexec -timelimitarg=${SINGLE_TIMELMT}"
 		local runtests_parm="-srcdir=${srcdir} \
 			-batchdir=${batchdir} -batch \
-			-tests=${testfile} -mpiexec=mpiexec -timelimitarg=${SINGLE_TIMELMT}"
+			-tests=${testfile} -mpiexec=mpich_exec -timelimitarg=${SINGLE_TIMELMT}"
 
 		perl $runtests $runtests_parm
 	done
@@ -226,44 +229,22 @@ gen_batch_script()
 #	PJM --mpi "max-proc-per-node=48"
 #PJM -L "elapse=${timelmt}"
 #PJM -L "rscunit=${rscunit},rscgrp=${rscgroup}"
-#	PJM -L "rscunit=rscunit_ft01,rscgrp=dvmck"
+#	PJM -L "rscunit=rscunit_ft01,rscgrp=dvsys-mck6,hobenv=linux2"
+#	PJM -L "rscunit=rscunit_ft01,rscgrp=eap-small"
+#	PJM -L "rscunit=rscunit_ft01,rscgrp=eap-large"
+#	PJM -L "rscunit=rscunit_ft02,rscgrp=dvsys-mck2_and_spack2,jobenv=linux" 
 #PJM -L proc-core=unlimited
 #------- Program execution -------#
 
-export LD_LIBRARY_PATH=\$HOME/${INS_DIR/$HOME\//}/lib:\$LD_LIBRARY_PATH
-export MPIR_CVAR_OFI_USE_PROVIDER=tofu
-export MPICH_CH4_OFI_ENABLE_SCALABLE_ENDPOINTS=1
-export MPIR_CVAR_ALLTOALL_SHORT_MSG_SIZE=2147483647 # 32768 in default (integer value)  
-export TOFU_NAMED_AV=1
-export UTF_MSGMODE=1
-#export TOFULOG_DIR=$result_dir
-
-echo "LD_LIBRARY_PATH=" $LD_LIBRARY_PATH
-echo "TOFU_NAMED_AV = " $TOFU_NAMED_AV
-echo "UTF_MSGMODE   = " $UTF_MSGMODE "(0: Eager, 1: Rendezous)"
-echo "UTF_TRANSMODE = " $UTF_TRANSMODE "(0: Chained, 1: Aggressive)"
-echo "MPIR_CVAR_ALLTOALL_SHORT_MSG_SIZE = " $MPIR_CVAR_ALLTOALL_SHORT_MSG_SIZE
-# ADDED on 2020/09/23
-export MPIR_CVAR_CH4_OFI_ENABLE_ATOMICS=0
-echo "MPIR_CVAR_CH4_OFI_ENABLE_ATOMICS= " $MPIR_CVAR_CH4_OFI_ENABLE_ATOMICS
-# ADDED on 2020/09/27
-export MPIR_PARAM_CH4_OFI_NUM_AM_BUFFERS=16
-echo "MPIR_PARAM_CH4_OFI_NUM_AM_BUFFERS=" $MPIR_PARAM_CH4_OFI_NUM_AM_BUFFERS
+export PLE_MPI_STD_EMPTYFILE=off
+##export LD_LIBRARY_PATH=\$HOME/${INS_DIR/$HOME\//}/lib:\$LD_LIBRARY_PATH
+export MPICH_HOME=$MPICH_HOME
+export MPIR_CVAR_CH4_OFI_CAPABILITY_SETS_DEBUG=1
+export MPICH_TOFU_SHOW_PARAMS=1
+export UTF_INFO=0x1
 
 `find "${runlists_dir}" -name "runtests-*.batch" -exec echo "sh" {} \;`
 
-#export PMIX_DEBUG=1
-## CONF_TOFU_INJECTSIZE=1856 (MSG_EAGER_SIZE = 1878)
-#	-x UTF_DEBUG=16 \\
-#	-x TOFULOG_DIR=$result_dir \\
-#	-x FI_LOG_PROV=tofu \\
-#	-x MPICH_DBG=FILE \\
-#	-x MPICH_DBG_CLASS=COLL \\
-#	-x MPICH_DBG_LEVEL=TYPICAL \\
-#
-#	-x PMIX_DEBUG=1 \\
-#	-x FI_LOG_LEVEL=Debug \\
-#
 EOF
 	done
 	chmod -R +x ${bspt_dir}

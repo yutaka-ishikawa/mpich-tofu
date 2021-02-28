@@ -1,4 +1,30 @@
 #####################################################################
+	How to build MPICH test scripts
+	   			    	    	     	2021/03/01
+#####################################################################
+The MPICH source distribution has test programs under the test directory.
+(1) In order to use them, run scripts are generated under the mpich-tofu
+   directory as follows:
+  $ cd $HOME/work/mpich-tofu/mpich-test
+  $ cd script
+  # See CREATE_FORT_LIST.sh and modify it for your local environment
+  # Then,
+  $ sh ./CREATE_FORT_LIST.sh
+  $ cd ..
+  # You will find the f77 and f90 directories.
+  $ ls f77/attr/runlists
+    runtests-1.batch  runtests.batch
+(2) Batch scripts are generated as follows:
+  $ cd $HOME/work/mpich-tofu/mpich-test/
+  $ cd script
+  # See CREATE_FORT_BATCH.sh and modify it for your local environment
+  # Then,
+  $ sh ./CREATE_FORT_BATCH.sh
+  $ cd ..
+  # You will find batch scripts as follows:
+  $ ls f77/*/batch-scripts/ f90/*/batch-scripts/
+
+#####################################################################
 	How to build Intel MPI Benchmarks
 	   			    	    	     	2021/02/26
 #####################################################################
