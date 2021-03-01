@@ -1,3 +1,56 @@
+
+#############################################################################
+	Test Plan
+	   			    	    	     	2021/03/02
+#############################################################################
+- MPICH-tofu must be built on compute node for creating F90 lirary.
+- Please test F77 using mpich-tofu-fc(cross comipled) today.
+
+-----------------+---------+---------+-------------------+------------------
+                 | IMB     | IMB+VBG | MPICH-Test C      |MPICH-Test F77&F90  
+-----------------+---------+---------+-------------------+------------------
+mpich-tofu       | Full    | Full    | attr, coll, pt2pt |
+                 |         |         | comm, datatype    |
+                 |         |         | errhan, errors    |
+                 |         |         | group, impls, info|   
+                 |         |         | init, mpi_t, perf |                  
+                 |         |         | topo, (rma)       |                  
+-----------------+---------+---------+-------------------+------------------
+mpich-tofu-mt    | Partial | Partial | Same as above     | Same as above    
+-----------------+---------+---------+-------------------+------------------
+mpich-tofu-nv    | Full    | Full    | Same as above     | attr, coll, comm 
+                 |         |         |                   | datatype, ext,   
+                 |         |         |                   | info, init, pt2pt
+                 |         |         |                   | rma, topo       
+-----------------+---------+---------+-------------------+------------------
+mpich-tofu-nv-mt | Full    | Full    | Same as above     | Same as above    
+-----------------+---------+---------+-------------------+------------------
+
+-----------------+---------+---------+-------------------+------------------
+mpich-tofu-fc    | Full    | Full    | Same as above     | Same as above    
+-----------------+---------+---------+-------------------+------------------
+mpich-tofu-fc-mt | Partial | Partial | Same as above     | Same as above    
+-----------------+---------+---------+-------------------+------------------
+
+UTF_ARCH
+ - fugaku: compiler=gcc/g++, c, c++, no multi-thread(MT) safe
+ - fugaku-mt:  compiler=gcc/g++, c, c++, MT safe
+ - fugaku-fccpx: compiler=fccpx/FCCpx/frtpx, c, c++, fortran, no MT safe
+ - fugaku-fccpx-mt: compiler=fccpx/FCCpx/frt, c, c++, fortran, MT safe
+( - fugaku-native: compiler=fcc/FCC/frt, c, c++, fortran, no MT safe
+  - fugaku-native-mt: compiler=fcc/FCC/frt, c, c++, fortran, MT safe
+)
+default INSTDIR
+	~/mpich-tofu/
+	~/mpich-tofu-mt/
+	~/mpich-tofu-fc/
+	~/mpich-tofu-fc-mt/
+	~/mpich-tofu-nv/
+	~/mpich-tofu-nv-mt/
+
+IMB, test
+
+
 #####################################################################
 	How to build MPICH test scripts
 	   			    	    	     	2021/03/01
