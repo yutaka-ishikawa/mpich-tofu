@@ -1,5 +1,28 @@
 If you already read this file, you have already cloned riken-mpich
 
+(1) creating build environment
+ 0) 
+   $ EXAMPLE_HOME=/home/g0000/u0000/
+   $ cd $EXAMPLE_HOME
+   $ mkdir work
+   $ cd work
+ 1) tools of mpich-tofu
+   $ git clone git@git.sys.r-ccs.riken.jp:software/mpich-tofu
+   $ cd mpich-tofu
+ 2) utf
+   $ git clone git@git.sys.r-ccs.riken.jp:software/utf
+ 3) mpich
+   $ git clone --recursive https://github.com/pmodels/mpich.git
+   $ (cd mpich; git checkout 169740255305011686c1781e3554f83eea448212)
+ 4) libfabric
+  $ cd modules
+  $ rm -rf libfabric
+  $ git clone git@git.sys.r-ccs.riken.jp:software/libfabric
+  $ cd libfabric/prov/tofu/src
+  $ ln -s ../../../../../../utf
+
+
+
  $ git clone git@git.sys.r-ccs.riken.jp:software/mpich-fugaku
  $ cd mpich-fugaku
  $ git clone --recursive https://github.com/pmodels/mpich.git
