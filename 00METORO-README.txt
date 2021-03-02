@@ -4,7 +4,10 @@
 	   			    	    	     	2021/03/02
 #############################################################################
 - MPICH-tofu must be built on compute node for creating F90 lirary.
+  pjsub -L rscunit=rscunit_ft01,rscgrp=eap-int,node=1,elapse=6:00:00 --interact --sparam wait-time=600
 - Please test F77 using mpich-tofu-fc(cross comipled) today.
+
+
 
 -----------------+---------+---------+-------------------+------------------
                  | IMB     | IMB+VBG | MPICH-Test C      |MPICH-Test F77&F90  
@@ -16,7 +19,7 @@ mpich-tofu       | Full    | Full    | attr, coll, pt2pt |
                  |         |         | init, mpi_t, perf |                  
                  |         |         | topo, (rma)       |                  
 -----------------+---------+---------+-------------------+------------------
-mpich-tofu-mt    | Partial | Partial | Same as above     | Same as above    
+mpich-tofu-mt    | Partial | Partial | Same as above     |
 -----------------+---------+---------+-------------------+------------------
 mpich-tofu-nv    | Full    | Full    | Same as above     | attr, coll, comm 
                  |         |         |                   | datatype, ext,   
