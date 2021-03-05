@@ -1,13 +1,17 @@
 #!/bin/sh
 
-TEST_DIR=${MPICH_TEST_DIR:-"$HOME/work/mpich-tofu/mpich-test"}
-SRC_DIR=${MPICH_TEST_SRC:-"$HOME/work/mpich-tofu/mpich/test/mpi"}
-INS_DIR=${MPICH_INS_DIR:-"$HOME/work/mpich-tofu"}
+#TEST_DIR=${MPICH_TEST_DIR:-"$HOME/work/mpich-tofu/mpich-test"}
+#SRC_DIR=${MPICH_TEST_SRC:-"$HOME/work/mpich-tofu/mpich/test/mpi"}
+#INS_DIR=${MPICH_INS_DIR:-"$HOME/work/mpich-tofu"}
+TEST_DIR=${MPICH_TEST_DIR:-"$HOME/mpich-tofu/work2/mpich-tofu/mpich-test"}
+SRC_DIR=${MPICH_TEST_SRC:-"$HOME/mpich-tofu/work2/mpich-tofu/mpich-exp-native/test/mpi"}
+INS_DIR=${MPICH_INS_DIR:-"$HOME/mpich-tofu-nv"}
+
 SINGLE_TIMELMT=${SINGLE_TIMEOUT:-"30s"}	# 30 second
 
 # Global Variables
 default_test="all"
-default_timelmt="60m"
+default_timelmt="2m"
 default_rscgrp="dvall"
 default_rscunt="rscunit_ft01"
 
@@ -182,6 +186,8 @@ gen_batch_script()
 				;;
 		esac
 	done
+
+	local testname2=`echo $testname | sed -e 's/\//_/g'`
 	
 	# Generate batch-scripts under testname folder
 	local subdir="${TEST_DIR}/$testname"
@@ -216,7 +222,7 @@ gen_batch_script()
 #!/bin/bash
 #
 #------ pjsub option --------#
-#PJM -N "${testname}" # jobname
+#PJM -N "${testname2}" # jobname
 #PJM -S		# output statistics
 #PJM --spath "$result_dir/%n.%j.stat"
 #PJM -o "$result_dir/%n.%j.out"
@@ -242,6 +248,8 @@ export MPICH_HOME=$MPICH_HOME
 export MPIR_CVAR_CH4_OFI_CAPABILITY_SETS_DEBUG=1
 export MPICH_TOFU_SHOW_PARAMS=1
 export UTF_INFO=0x1
+export PATH=\$MPICH_HOME/bin:\$PATH
+export LD_LIBRARY_PATH=\$MPICH_HOME/lib:\$LD_LIBRARY_PATH
 
 `find "${runlists_dir}" -name "runtests-*.batch" -exec echo "sh" {} \;`
 
