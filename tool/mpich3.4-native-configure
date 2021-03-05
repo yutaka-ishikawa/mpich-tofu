@@ -12,7 +12,7 @@ echo "option=" $OPTION "dir=" $DIR "instdir=" $INSTDIR "mpich_src=" $MPICH_SRC "
 
 #export MPILIBNAME=mpich
 export LD_LIBRARY_PATH=$INSTDIR/lib:$LD_LIBRARY_PATH
-export LIBS="-ldl -lrt -lutf -ltofutop -ltofucom -lpmix"
+export LIBS="-ldl -lrt -lgcc_s -lutf -ltofutop -ltofucom -lpmix"
 export CC=fcc
 export CXX=FCC
 export F77=frt
