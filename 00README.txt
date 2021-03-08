@@ -1,97 +1,71 @@
-If you already read this file, you have already cloned riken-mpich
+If you already read this file, you have already cloned mpich-tofu
 
-(1) creating build environment
+(1) creating the build environment
  0) 
    $ EXAMPLE_HOME=/home/g0000/u0000/
    $ cd $EXAMPLE_HOME
    $ mkdir work
    $ cd work
  1) tools of mpich-tofu
-   $ git clone git@git.sys.r-ccs.riken.jp:software/mpich-tofu
-   $ cd mpich-tofu
+   $ git clone https://github.com/yutaka-ishikawa/mpich-tofu.git
  2) utf
-   $ git clone git@git.sys.r-ccs.riken.jp:software/utf
+   $ cd $EXAMPLE_HOME/work/mpich-tofu
+   $ git clone https://github.com/yutaka-ishikawa/utf.git
+   $ cd utf
+   $ git checkout fast
+   $ cd $EXAMPLE_HOME/work/
  3) mpich
    $ git clone --recursive https://github.com/pmodels/mpich.git
-   $ (cd mpich; git checkout 169740255305011686c1781e3554f83eea448212)
+   $ cd mpich
+   $ git checkout 169740255305011686c1781e3554f83eea448212
+   $ cd ../json-c
+   $ git checkout 366f1c6c0ea2ca2f1077c1296f5cb744336fac38
+   $ cd modules/yaksa
+   $ git checkout 110f306ac5fc63af3a5d21ed63a70e053a4c483a
  4) libfabric
-  $ cd modules
+  $ cd $EXAMPLE_HOME/work/mpich/modules
   $ rm -rf libfabric
-  $ git clone git@git.sys.r-ccs.riken.jp:software/libfabric
+   $ git clone https://github.com/yutaka-ishikawa/libfabric.git
   $ cd libfabric/prov/tofu/src
-  $ ln -s ../../../../../../utf
+  $ git checkout fast
+  $ ln -s ../../../../../../utf .
 
-
-
- $ git clone git@git.sys.r-ccs.riken.jp:software/mpich-fugaku
- $ cd mpich-fugaku
- $ git clone --recursive https://github.com/pmodels/mpich.git
-   # $ git clone http://git.mpich.org/mpich.git
-   # $ (cd mpich; git submodule update --init)
- $ (cd mpich; git checkout d6091ffb3fd6a63d190c8e0fff5450c13ef1ea08)
-   # $ (cd mpich; git checkout 1b6d26b8ea270b699ddc2b600e97ff73ba0d9dd1)
- $ edit mpich/src/mpid/ch4/src/ch4_init.c (line 469)
- $ git clone git@git.sys.r-ccs.riken.jp:software/libfabric
-
-(0) Building utofu simulation environment (Skip for Fugaku)
-  - for fx100
-     $ git clone git@git.sys.r-ccs.riken.jp:work/mhatanaka/utofu-on-fx100
-     $ (cd utofu-on-fx100/utofu_fx100/lib64; cp -p libutofu.so INST/lib/)
-     $ (cd new-simu-tofu; make; make install)
-  - for others (Except Fugaku)
-     $ cd new-sim-utofu
-     $ make
-     $ make install
-(1) Installation
-    Note that installation directory is $HOME/riken-mpich/ in default.
- 0) pmix for MPICH on Fugaku (skip in the case of utofu simulation environment)
-     $ (cd pmix-wrapper; make; make install)
- 1) libfabric
-     $ (cd libfabric; git checkout newdev)
-     ##$ (cd libfabric; git checkout dev1)
-     $ ./tool/libfabric-autogen
-     $ ./tool/libfabric-configure
-     	"fi_tofu_setdopt"  and "fi_tofu_cntrl" are added in libfabric.map
-		fi_tofu_setdopt;
-		fi_tofu_cntrl;
-     $ (cd libfabric; make clean>/dev/null)
-     $ (cd libfabric; make V=1 >../log/cmp-libfabric.txt 2>&1)
-     $ (cd libfabric; make install >../log/ins-libfabric.txt 2>&1)
-     $ ./tool/fabtests-autogen
-     $ ./tool/fabtests-configure
-     $ (cd libfabric/fabtests; make)
-     $ (cd libfabric/fabtests; make install)
-     $ $HOME/riken-mpich/bin/fi_getinfo_test -p tofu
+(2) Installation
+ 1) utf
+   $ cd $EXAMPLE_HOME/work/mpich-tofu/utf/src
+   $ export UTF_ARCH=fugaku
+   $ make
+   $ make install
  2) mpich
-   1. Configuration
-      $ ./tool/mpich-autogen
-     See gen-mpi.txt to check if configuration files have been sucessfully done.
-     The default install path is ~/riken-mpich. If you want to change the
-     default, declare INSTDIR environment variable before configuration.
-   2. Skip this step for Fugaku
-     2.1 Copy and Configure mpiexec.hydra
-       $ cp -p mpich mpich.hydra
-       $ ./tool/mpich-hydra-configure
-       See cnf-mpi-hydra.txt to check if configuration has been sucessfully done.
-     2.2 Installing mpiexec.hydra binary;
-       $ (cd mpich.hydra; make clean > /dev/null)
-       $ (cd mpich.hydra; date; make V=1 >../log/cmp-mpi-hydra.txt 2>&1; date)
-       $ (cd mpich.hydra; date; make install >../log/ins-mpi-hydra.txt 2>&1; date)
-   3. Configure mpiexec for utofu
-      $ ./tool/mpich-configure
-     See cnf-mpi.txt to check if configuration has been sucessfully done.
-   4. Installing mpiexec for utofu
-     $ (cd mpich; make clean > /dev/null)
-     $ (cd mpich; date; make V=1 >../log/cmp-mpi.txt 2>&1; date)
-     $ (cd mpich; date; make install >../log/ins-mpi.txt 2>&1; date)
-     $ export LD_LIBRARY_PATH=$HOME/riken-mpich/lib:$LD_LIBRARY_PATH
+   $ cd $EXAMPLE_HOME/work/mpich-tofu/mpich
+   $ patch -p1 < ../tool/diff/MPICH-UTF.diff 
+   $ patch -p1 < ../tool/diff/MPICH-FC.diff 
+   $ cd ..
+   $ ./tool/mpich-autogen
+     # check if the autogen has successfuly finished:
+	  the log is log/gen-mpi.txt
+   $ ./tool/mpich3.4-gcc-configure
+     # check if the configure has successfuly finished:
+	  the log is log/gen-mpich-gcc.txt
+   $ mv mpich/src/util/mpir_cvars.c mpich/src/util/mpir_cvars.c.org
+   $ cp tool/diff/utf-mpir_cvars.c mpich/src/util/mpir_cvars.c
+   $ (cd mpich; date; make -j 4 V=1 >../log/cmp-mpich-gcc.txt 2>&1; date)
+     # check if the compilation has successfuly finished:
+	  the log is log/cmp-mpich-gcc.txt
+   $ (cd mpich; make V=1 install > ../log/inst-mpich-gcc.txt 2>&1; date)
+3) mpich execution wrapper and VBG
+   $ cd $EXAMPLE_HOME/work/mpich-tofu/utf/src/mpi_vbg
+   $ make
+   $ make install
 
-3) The following shell environment selects the Tofu provider:
-     $ export MPIR_CVAR_OFI_USE_PROVIDER=tofu
-   If you want to debug libfabric
-     $ export FI_LOG_LEVEL=Debug
-     $ export FI_LOG_PROV=tofu
+(3) Runtime Environment
+   $ export MPICH_HOME=$(HOME)/mpich-tofu/
+   $ export PATH=$PATH:$(MPICH_HOME)/bin:$PATH
 
-MEMO:
----------
-AM_CPPFLAGS += -I$(top_srcdir)/src/mpid/ch4/src -I$(top_srcdir)/src/pmi/include
+(4) Test
+   $ cd $EXAMPLE_HOME/work/mpich-tofu/utf/test
+   $ cd base
+   $ make clean; make
+   $ mkdir results
+   $ pjsub run-numazu-test_p2p.sh
+
