@@ -42,7 +42,7 @@ XX_CONF_PERF_ARGS=" \
 	--enable-error-checking=no \
 	--enable-g=none \
 	--disable-debuginfo \
-	--enable-threads=multiple \
+	--enable-threads=single \
 	--without-ch4-shmmods \
 	--with-device=ch4:ofi:tofu \
 	--with-libfabric=embedded \

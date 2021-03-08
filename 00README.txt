@@ -1,5 +1,22 @@
 If you already read this file, you have already cloned mpich-tofu
 
+(0) Here are assumptions
+ 1) build directories are
+   $HOME/work/gcc       - for single thread compiled by cross gcc
+   $HOME/work/gcc-mt    - for multiple thread compiled by cross gcc
+   $HOME/work/native    - for single thread compiled by Fujitsu fcc on compute node
+   $HOME/work/native-mt - for multiple thread compiled by Fujitsu fcc on compute node
+ 2) installation directories are
+   $HOME/mpich-tofu       - for single thread compiled by cross gcc
+   $HOME/mpich-tofu-mt    - for multiple thread compiled by cross gcc
+   $HOME/mpich-tofu-nv    - for single thread compiled by Fujitsu fcc on compute node
+   $HOME/mpich-tofu-nv-mt - for multiple thread compiled by Fujitsu fcc on compute node
+ 3) configuration scripts are
+   mpich3.4-gcc-configure           - for single thread compiled by cross gcc
+   mpich3.4-gcc-mt-configure        - for multiple thread compiled by cross gcc
+   mpich3.4-gcc-native-configure    - for single thread compiled by Fujitsu fcc on compute node
+   mpich3.4-gcc-native-mt-configure - for multiple thread compiled by Fujitsu fcc on compute node
+
 (1) creating the build environment
  0) 
    $ EXAMPLE_HOME=/home/g0000/u0000/
@@ -69,8 +86,8 @@ If you already read this file, you have already cloned mpich-tofu
    $ make install
 
 (3) Runtime Environment
-   $ export MPICH_HOME=$(HOME)/mpich-tofu/
-   $ export PATH=$PATH:$(MPICH_HOME)/bin:$PATH
+   $ export MPICH_HOME=$HOME/mpich-tofu/
+   $ export PATH=$PATH:$MPICH_HOME/bin:$PATH
 
 (4) Test
    $ cd $EXAMPLE_HOME/work/gcc/mpich-tofu/utf/test
