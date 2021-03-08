@@ -1,12 +1,8 @@
 #!/bin/sh
 
-#TEST_DIR=${MPICH_TEST_DIR:-"$HOME/work/mpich-tofu/mpich-test"}
-#SRC_DIR=${MPICH_TEST_SRC:-"$HOME/work/mpich-tofu/mpich/test/mpi"}
-#INS_DIR=${MPICH_INS_DIR:-"$HOME/work/mpich-tofu"}
-TEST_DIR=${MPICH_TEST_DIR:-"$HOME/mpich-tofu/work2/mpich-tofu/mpich-test"}
-SRC_DIR=${MPICH_TEST_SRC:-"$HOME/mpich-tofu/work2/mpich-tofu/mpich-exp-native/test/mpi"}
-INS_DIR=${MPICH_INS_DIR:-"$HOME/mpich-tofu-nv"}
-
+TEST_DIR=${MPICH_TEST_DIR:-"$MPICH_SRCDIR/mpich-test"}
+SRC_DIR=${MPICH_TEST_SRC:-"$MPICH_SRCDIR/mpich/test/mpi"}
+INS_DIR=${MPICH_INS_DIR:-"$MPICH_HOME"}
 SINGLE_TIMELMT=${SINGLE_TIMEOUT:-"30s"}	# 30 second
 
 # Global Variables
