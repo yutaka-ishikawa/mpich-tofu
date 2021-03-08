@@ -1,8 +1,8 @@
 #!/bin/bash
 #export MPICH_HOME=$HOME/mpich-tofu-fc
 
-#RESOURCE=eap-small
-#UNIT=rscunit_ft01
+RESOURCE=$1
+UNIT=$2
 
 sh ./generate_run.sh -s f77/attr:resource=$RESOURCE,unit=$UNIT
 sh ./generate_run.sh -s f77/coll:resource=$RESOURCE,unit=$UNIT
