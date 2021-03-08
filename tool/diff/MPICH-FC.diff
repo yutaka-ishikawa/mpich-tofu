@@ -1,0 +1,71 @@
+diff --git a/src/include/mpir_op_util.h b/src/include/mpir_op_util.h
+index 58b264a..d54d1a2e 100644
+--- a/src/include/mpir_op_util.h
++++ b/src/include/mpir_op_util.h
+@@ -301,6 +301,20 @@ typedef struct {
+ /* floating point group */
+ /* FIXME: REAL need not be float, nor DOUBLE_PRECISION be double.
+    Fortran types are not synonyms for the C types */
++#define TOFU
++#ifdef TOFU
++#define MPIR_OP_TYPE_GROUP_FLOATING_POINT                                                                             \
++    MPIR_OP_TYPE_MACRO(MPI_FLOAT, float, mpir_typename_float)                                                         \
++    MPIR_OP_TYPE_MACRO(MPI_DOUBLE, double, mpir_typename_double)                                                      \
++    MPIR_OP_TYPE_MACRO_HAVE_FORTRAN(MPI_REAL, MPIR_FC_REAL_CTYPE, mpir_typename_real)                                 \
++    MPIR_OP_TYPE_MACRO_HAVE_FORTRAN(MPI_DOUBLE_PRECISION, MPIR_FC_DOUBLE_CTYPE, mpir_typename_double_precision)
++
++/* The MPI Standard doesn't include these types in the floating point group for
++ * predefined operations but MPICH supports them when possible. */
++#define MPIR_OP_TYPE_GROUP_FLOATING_POINT_EXTRA                                               \
++    MPIR_OP_TYPE_MACRO_HAVE_REAL4_CTYPE(MPI_REAL4, MPIR_REAL4_CTYPE, mpir_typename_real4)     \
++    MPIR_OP_TYPE_MACRO_HAVE_REAL8_CTYPE(MPI_REAL8, MPIR_REAL8_CTYPE, mpir_typename_real8)
++#else
+ #define MPIR_OP_TYPE_GROUP_FLOATING_POINT                                                                             \
+     MPIR_OP_TYPE_MACRO(MPI_FLOAT, float, mpir_typename_float)                                                         \
+     MPIR_OP_TYPE_MACRO(MPI_DOUBLE, double, mpir_typename_double)                                                      \
+@@ -315,6 +329,7 @@ typedef struct {
+     MPIR_OP_TYPE_MACRO_HAVE_REAL8_CTYPE(MPI_REAL8, MPIR_REAL8_CTYPE, mpir_typename_real8)     \
+     MPIR_OP_TYPE_MACRO_HAVE_REAL16_CTYPE(MPI_REAL16, MPIR_REAL16_CTYPE, mpir_typename_real16) \
+     MPIR_OP_TYPE_MACRO_HAVE_FLOAT16(MPIX_C_FLOAT16, _Float16, mpir_typename_float16)
++#endif
+ 
+ /* logical group */
+ /* FIXME Is MPI_Fint really OK here? */
+@@ -325,11 +340,29 @@ typedef struct {
+ #define MPIR_OP_TYPE_GROUP_LOGICAL_EXTRA        /* empty, provided for consistency */
+ 
+ /* complex group */
++#define TOFU
++#ifdef TOFU
++#define MPIR_OP_TYPE_GROUP_COMPLEX                                                                                    \
++    MPIR_OP_TYPE_MACRO_HAVE_FORTRAN(MPI_COMPLEX, s_fc_complex, mpir_typename_complex)                                 \
++    MPIR_OP_TYPE_MACRO_HAVE_C_FLOAT_COMPLEX(MPI_C_FLOAT_COMPLEX, float _Complex, mpir_typename_c_float_complex)       \
++    MPIR_OP_TYPE_MACRO_HAVE_C_DOUBLE_COMPLEX(MPI_C_DOUBLE_COMPLEX, double _Complex, mpir_typename_c_double_complex)
++#else
+ #define MPIR_OP_TYPE_GROUP_COMPLEX                                                                                    \
+     MPIR_OP_TYPE_MACRO_HAVE_FORTRAN(MPI_COMPLEX, s_fc_complex, mpir_typename_complex)                                 \
+     MPIR_OP_TYPE_MACRO_HAVE_C_FLOAT_COMPLEX(MPI_C_FLOAT_COMPLEX, float _Complex, mpir_typename_c_float_complex)       \
+     MPIR_OP_TYPE_MACRO_HAVE_C_DOUBLE_COMPLEX(MPI_C_DOUBLE_COMPLEX, double _Complex, mpir_typename_c_double_complex)   \
+     MPIR_OP_TYPE_MACRO_HAVE_C_LONG_DOUBLE_COMPLEX(MPI_C_LONG_DOUBLE_COMPLEX, long double _Complex, mpir_typename_c_long_double_complex)
++#endif
++
++#define TOFU
++#ifdef TOFU
++#define MPIR_OP_TYPE_GROUP_COMPLEX_EXTRA                                                                                      \
++    MPIR_OP_TYPE_MACRO_HAVE_FORTRAN(MPI_DOUBLE_COMPLEX, d_fc_complex, mpir_typename_double_complex)                           \
++    MPIR_OP_TYPE_MACRO_HAVE_COMPLEX8(MPI_COMPLEX8, s_complex, mpir_typename_complex8)                                         \
++    MPIR_OP_TYPE_MACRO_HAVE_COMPLEX16(MPI_COMPLEX16, d_complex, mpir_typename_complex16)                                      \
++    MPIR_OP_TYPE_MACRO_HAVE_CXX_COMPLEX(MPIR_CXX_COMPLEX_VALUE, s_complex, mpir_typename_cxx_complex_value)                   \
++    MPIR_OP_TYPE_MACRO_HAVE_CXX_COMPLEX(MPIR_CXX_DOUBLE_COMPLEX_VALUE, d_complex, mpir_typename_cxx_double_complex_value)
++#else
+ #define MPIR_OP_TYPE_GROUP_COMPLEX_EXTRA                                                                                      \
+     MPIR_OP_TYPE_MACRO_HAVE_FORTRAN(MPI_DOUBLE_COMPLEX, d_fc_complex, mpir_typename_double_complex)                           \
+     MPIR_OP_TYPE_MACRO_HAVE_COMPLEX8(MPI_COMPLEX8, s_complex, mpir_typename_complex8)                                         \
+@@ -337,6 +370,7 @@ typedef struct {
+     MPIR_OP_TYPE_MACRO_HAVE_CXX_COMPLEX(MPIR_CXX_COMPLEX_VALUE, s_complex, mpir_typename_cxx_complex_value)                   \
+     MPIR_OP_TYPE_MACRO_HAVE_CXX_COMPLEX(MPIR_CXX_DOUBLE_COMPLEX_VALUE, d_complex, mpir_typename_cxx_double_complex_value)     \
+     MPIR_OP_TYPE_MACRO_HAVE_CXX_LONG_DOUBLE_COMPLEX(MPIR_CXX_LONG_DOUBLE_COMPLEX_VALUE, ld_complex, mpir_typename_cxx_long_double_complex_value)
++#endif
+ 
+ /* byte group */
+ #define MPIR_OP_TYPE_GROUP_BYTE         \
