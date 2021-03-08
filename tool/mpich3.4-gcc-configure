@@ -2,7 +2,7 @@
 SRC=$1
 DIR=$2
 
-MPICH_SRC=${SRC:-./mpich-exp-gcc}
+MPICH_SRC=${SRC:-./mpich}
 INSTDIR=${DIR:-$HOME/mpich-tofu}
 
 LOGDIR=log
@@ -40,7 +40,7 @@ if [ ! -d $LOGDIR ]; then
 fi
 
 XX_CONF_HOST=--host=aarch64-unknown-linux-gnu
-echo "Experiment"
+echo "GCC CROSS"
 XX_CONF_PERF_ARGS=" \
 	--enable-fast=all \
 	--enable-error-checking=no \
