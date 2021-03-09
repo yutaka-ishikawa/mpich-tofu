@@ -12,10 +12,15 @@ If you already read this file, you have already cloned mpich-tofu
    $HOME/mpich-tofu-nv    - for single thread compiled by Fujitsu fcc on compute node
    $HOME/mpich-tofu-nv-mt - for multiple thread compiled by Fujitsu fcc on compute node
  3) configuration scripts are
-   mpich3.4-gcc-configure           - for single thread compiled by cross gcc
-   mpich3.4-gcc-mt-configure        - for multiple thread compiled by cross gcc
-   mpich3.4-gcc-native-configure    - for single thread compiled by Fujitsu fcc on compute node
-   mpich3.4-gcc-native-mt-configure - for multiple thread compiled by Fujitsu fcc on compute node
+   mpich3.4-gcc-configure       - for single thread compiled by cross gcc
+   mpich3.4-gcc-mt-configure    - for multiple thread compiled by cross gcc
+   mpich3.4-native-configure    - for single thread compiled by Fujitsu fcc on compute node
+   mpich3.4-native-mt-configure - for multiple thread compiled by Fujitsu fcc on compute node
+ 4) shell variable for UTF build
+   export UTF_ARCH=fugaku		for single thread compiled by cross gcc
+   export UTF_ARCH=fugaku-mt		for multiple thread compiled by cross gcc
+   export UTF_ARCH=fugaku-native	for single thread compiled by Fujitsu fcc on compute node
+   export UTF_ARCH=fugaku-native-mt	for multiple thread compiled by Fujitsu fcc on compute node
 
 (1) creating the build environment
  0) 
@@ -71,9 +76,16 @@ If you already read this file, you have already cloned mpich-tofu
    $ ./tool/mpich-autogen
      # check if the autogen has successfuly finished:
 	  the log is log/gen-mpi.txt
+   # mpich3.4-gcc-configure       - for single thread compiled by cross gcc
+   # mpich3.4-gcc-mt-configure    - for multiple thread compiled by cross gcc
+   # mpich3.4-native-configure    - for single thread compiled by Fujitsu fcc on compute node
+   # mpich3.4-native-mt-configure - for multiple thread compiled by Fujitsu fcc on compute node
    $ ./tool/mpich3.4-gcc-configure
      # check if the configure has successfuly finished:
-	  the log is log/gen-mpich-gcc.txt
+	  the log is log/gen-mpich-gcc.txt, or
+		     log/gen-mpich-gcc-mt.txt,
+		     log/gen-mpich-native.txt,
+		     log/gen-mpich-native-mt.txt
    $ mv mpich/src/util/mpir_cvars.c mpich/src/util/mpir_cvars.c.org
    $ cp tool/diff/utf-mpir_cvars.c mpich/src/util/mpir_cvars.c
    $ (cd mpich; date; make -j 4 V=1 >../log/cmp-mpich-gcc.txt 2>&1; date)

@@ -40,7 +40,7 @@ if [ ! -d $LOGDIR ]; then
 fi
 
 XX_CONF_HOST=--host=aarch64-unknown-linux-gnu
-echo "GCC CROSS"
+echo "GCC CROSS, enable multithread"
 XX_CONF_PERF_ARGS=" \
 	--enable-fast=all \
 	--enable-error-checking=no \

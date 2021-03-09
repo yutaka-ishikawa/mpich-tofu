@@ -36,7 +36,7 @@ if [ ! -d $LOGDIR ]; then
     mkdir $LOGDIR
 fi
 
-echo "NATIVE"
+echo "NATIVE, enable multithread"
 XX_CONF_PERF_ARGS=" \
 	--enable-fast=all \
 	--enable-error-checking=no \
@@ -79,7 +79,7 @@ date
 	MPICHLIB_CFLAGS=-O3 MPICHLIB_FFLAGS=-O3 MPICHLIB_CXXFLAGS=-O3 MPICH_MPICC_LIBS="-lutf -lpmix -ldl -lrt -ltofutop -ltofucom" \
 	MPICH_MPICXX_LIBS="-lutf -lpmix -ldl -lrt -ltofutop -ltofucom" \
 	MPICH_MPIF77_LIBS="-lutf -lpmix -ldl -lrt -ltofutop -ltofucom" \
-	>../$LOGDIR/cnf-mpi-native.txt 2>&1)
+	>../$LOGDIR/cnf-mpi-native-mt.txt 2>&1)
 
 date
 
