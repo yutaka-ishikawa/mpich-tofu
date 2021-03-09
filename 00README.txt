@@ -70,8 +70,9 @@ If you already read this file, you have already cloned mpich-tofu
    $ make install
  2) mpich
    $ cd $EXAMPLE_HOME/work/gcc/mpich-tofu/mpich
-   $ patch -p1 < ../tool/diff/MPICH-UTF.diff 
-   $ patch -p1 < ../tool/diff/MPICH-FC.diff 
+   $ patch -p1 < ../tool/diff/MPICH-UTF.patch
+      ### $ patch -p1 < ../tool/diff/MPICH-FC.patch
+   $ patch -p1 < ../tool/diff/MPICH3.4-UTF-FCCONF.patch
    $ cd ..
    $ ./tool/mpich-autogen
      # check if the autogen has successfuly finished:
@@ -93,6 +94,7 @@ If you already read this file, you have already cloned mpich-tofu
 	  the log is log/cmp-mpich-gcc.txt
    $ (cd mpich; make V=1 install > ../log/inst-mpich-gcc.txt 2>&1; date)
 3) mpich execution wrapper and VBG
+   # export UTF_ARCH=fugaku or others
    $ cd $EXAMPLE_HOME/work/gcc/mpich-tofu/utf/src/mpi_vbg
    $ make
    $ make install
@@ -102,6 +104,7 @@ If you already read this file, you have already cloned mpich-tofu
    $ export PATH=$PATH:$MPICH_HOME/bin:$PATH
 
 (4) Test
+   # export UTF_ARCH=fugaku or others
    $ cd $EXAMPLE_HOME/work/gcc/mpich-tofu/utf/test
    $ cd base
    $ make clean; make
