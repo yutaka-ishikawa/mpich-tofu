@@ -11,6 +11,7 @@ CUR_DIR=`pwd`
 echo "option=" $OPTION "dir=" $DIR "instdir=" $INSTDIR "mpich_src=" $MPICH_SRC "logdir=" $LOGDIR
 
 #export MPILIBNAME=mpich
+export MPID_NO_FLOAT16=yes
 export LD_LIBRARY_PATH=$INSTDIR/lib:$LD_LIBRARY_PATH
 export LIBS="-ldl -lrt -lgcc_s -lutf -ltofutop -ltofucom -lpmix"
 export CC=fcc
@@ -31,6 +32,7 @@ echo LDFLAGS=$LDFLAGS
 echo LD_LIBRARY_PATH=$LD_LIBRARY_PATH
 echo INSTDIR=$INSTDIR
 echo LIBS=$LIBS
+echo MPID_NO_FLOAT16=$MPID_NO_FLOAT16
 
 if [ ! -d $LOGDIR ]; then
     mkdir $LOGDIR
