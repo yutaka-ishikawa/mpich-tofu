@@ -111,3 +111,30 @@ If you already read this file, you have already cloned mpich-tofu
    $ mkdir results
    $ pjsub run-numazu-test_p2p.sh
 
+
+(5) MPICH-Test
+   $ cd $EXAMPLE_HOME/work/gcc/mpich-tofu/mpich/test
+   $ make V=1 >& ../../log/cmp-mpichtest.txt
+     # The following error might be observed.
+    rtest.c: In function 'main':
+    rtest.c:9:12: error: 'testname' undeclared (first use in this function); did you mean 'tempnam'?
+         printf(testname);
+	        ^~~~~~~~
+                 tempnam
+    rtest.c:9:12: note: each undeclared identifier is reported only once for each function it appears in
+
+   $ cd $EXAMPLE_HOME/work/gcc/mpich-tofu/mpich-test/script
+   $ (export MPICH_SRCDIR=$EXAMPLE_HOME/work/gcc/mpich-tofu/mpich; \
+      export MPICH_HOME=$HOME/mpich-tofu/; \
+      export SINGLE_TIMEOUT=2m; \
+      sh ./CREATE_LIST.sh)
+   $ (export MPICH_SRCDIR=$EXAMPLE_HOME/work/gcc/mpich-tofu/mpich; \
+      export MPICH_HOME=$HOME/mpich-tofu/; \
+      sh ./CREATE_BATCH.sh dvsys-spack2 rscunit_ft02)
+
+------
+   $ (export MPICH_SRCDIR=$HOME/work2/mpich-tofu/; export MPICH_HOME=$HOME/mpich-tofu/; \
+     export SINGLE_TIMEOUT=2m; \
+     sh ./CREATE_LIST.sh)
+   $ (export MPICH_SRCDIR=$HOME/work2/mpich-tofu/; export MPICH_HOME=$HOME/mpich-tofu/; \
+     sh ./CREATE_BATCH.sh dvsys-spack2 rscunit_ft02)
