@@ -3,11 +3,11 @@
 TEST_DIR=${MPICH_TEST_DIR:-"$MPICH_SRCDIR/mpich-test"}
 SRC_DIR=${MPICH_TEST_SRC:-"$MPICH_SRCDIR/mpich/test/mpi"}
 INS_DIR=${MPICH_INS_DIR:-"$MPICH_HOME"}
-SINGLE_TIMELMT=${SINGLE_TIMEOUT:-"30s"}	# 30 second
+SINGLE_TIMELMT=${SINGLE_TIMEOUT:-"2m"}	# 2 min.
 
 # Global Variables
 default_test="all"
-default_timelmt="2m"
+default_timelmt="60m"
 default_rscgrp="dvall"
 default_rscunt="rscunit_ft01"
 
