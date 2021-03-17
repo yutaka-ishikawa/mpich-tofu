@@ -12,7 +12,7 @@
 #	PJM --mpi "max-proc-per-node=8"
 #	PJM --mpi "max-proc-per-node=16"
 #	PJM --mpi "max-proc-per-node=48"
-#PJM -L "elapse=00:02:00"
+#PJM -L "elapse=03:00:00"
 #	PJM -L "elapse=00:30:00"
 #	PJM -L "elapse=00:10:00"
 #	PJM -L "rscunit=rscunit_ft01,rscgrp=dvsys-mck1,jobenv=linux2"

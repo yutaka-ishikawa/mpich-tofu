@@ -41,7 +41,7 @@ OKBENCH="Allreduce Reduce Alltoall Bcast Barrier Allgather Allgatherv Gather Sca
 OKBENCH1="Allreduce Reduce Alltoall Bcast Barrier"
 OKBENCH2="Allgather Allgatherv Gather Scatter"
 OKBENCH3="Gatherv Scatterv"
-NP=16384
+NP=32768
 LENFILE=len/len-gather-8192.txt
 MEM=7
 
