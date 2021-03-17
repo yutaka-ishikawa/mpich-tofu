@@ -4,6 +4,15 @@ all:
 	@echo "make run or make run-clean"
 run-comm:
 	pjsub comm/batch-scripts/run-mpichtest-*.sh 
+run-threads:
+	pjsub threads/coll/batch-scripts/run-mpichtest-*.sh
+	pjsub threads/comm/batch-scripts/run-mpichtest-*.sh
+	pjsub threads/init/batch-scripts/run-mpichtest-*.sh
+	pjsub threads/mpi_t/batch-scripts/run-mpichtest-*.sh
+	pjsub threads/perf/batch-scripts/run-mpichtest-*.sh
+	pjsub threads/pt2pt/batch-scripts/run-mpichtest-*.sh
+	pjsub threads/rma/batch-scripts/run-mpichtest-*.sh
+	pjsub threads/spawn/batch-scripts/run-mpichtest-*.sh
 run-frt:
 	pjsub f77/attr/batch-scripts/run-mpichtest-*.sh
 	pjsub f77/coll/batch-scripts/run-mpichtest-*.sh
