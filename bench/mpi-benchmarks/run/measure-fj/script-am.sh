@@ -31,7 +31,7 @@ run_bench() {
 	#echo "UTF_INFO = " $UTF_INFO
 	echo "mpiexec -n $2 $MPIOPT $BENCH_PROG -npmin $2 -mem $3 $_LENOPT $1"
 	#unset MPIR_CVAR_CH4_OFI_CAPABILITY_SETS_DEBUG
-	3unset MPICH_TOFU_SHOW_PARAMS
+	#unset MPICH_TOFU_SHOW_PARAMS
 	#unset UTF_INFO
 	return
     fi
