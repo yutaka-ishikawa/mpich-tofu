@@ -36,9 +36,23 @@ export MPIR_CVAR_DEVICE_COLLECTIVES=none	#
 export MPIR_CVAR_GATHERV_INTER_SSEND_MIN_PROCS=608256 #
 export MPIR_CVAR_BARRIER_INTRA_ALGORITHM=dissemination
 
-OKBENCH1="Allreduce Reduce Alltoall Bcast Barrier"
-OKBENCH2="Allgather Allgatherv Gather Scatter"
-OKBENCH3="Scatterv Gatherv"
+export UTF_BG_REDUCE_MAXLEN=128 # default
+export UTF_BG_BCAST_MAXLEN=128  # default
+export UTF_BG_SHOW_MAXLEN=1
+
+#OKBENCH1="Allreduce Reduce Alltoall Bcast Barrier"
+#OKBENCH2="Allgather Allgatherv Gather Scatter"
+#OKBENCH3="Gatherv Scatterv"
+OKBENCH1="Allreduce"
+OKBENCH2="Reduce"
+OKBENCH3="Alltoall"
+OKBENCH4="Bcast Barrier"
+OKBENCH5="Allgather"
+OKBENCH6="Allgatherv"
+OKBENCH7="Gather"
+OKBENCH8="Scatter"
+OKBENCH9="Gatherv"
+OKBENCH0="Scatterv"
 
 #############
 # 2021/02/14, MB-1K-TG.5127527, 19:58
@@ -48,10 +62,26 @@ NP=1024
 LENFILE=len/len-gather-1024.txt
 MEM=7
 
+
 run_bench "$OKBENCH1" $NP $MEM $LENFILE
 echo
 run_bench "$OKBENCH2" $NP $MEM $LENFILE
 echo
 run_bench "$OKBENCH3" $NP $MEM $LENFILE
+echo
+run_bench "$OKBENCH4" $NP $MEM $LENFILE
+echo
+run_bench "$OKBENCH5" $NP $MEM $LENFILE
+echo
+run_bench "$OKBENCH6" $NP $MEM $LENFILE
+echo
+run_bench "$OKBENCH7" $NP $MEM $LENFILE
+echo
+run_bench "$OKBENCH8" $NP $MEM $LENFILE
+echo
+run_bench "$OKBENCH9" $NP $MEM $LENFILE
+echo
+run_bench "$OKBENCH0" $NP $MEM $LENFILE
+
 
 exit

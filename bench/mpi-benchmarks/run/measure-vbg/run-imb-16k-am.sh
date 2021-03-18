@@ -29,17 +29,51 @@
 MPIOPT="-of results/IMB-16K/%n.%j.out -oferr results/IMB-16K/%n.%j.err"
 BENCH_PROG=../../IMB-MPI1
 
-OKBENCH1="Allreduce Reduce Alltoall Bcast Barrier"
-OKBENCH2="Allgather Allgatherv Gather Scatter"
-OKBENCH3="Gatherv Scatterv"
+export UTF_BG_REDUCE_MAXLEN=128 # default
+export UTF_BG_BCAST_MAXLEN=128  # default
+export UTF_BG_SHOW_MAXLEN=1
+
+#OKBENCH1="Allreduce Reduce Alltoall Bcast Barrier"
+#OKBENCH2="Allgather Allgatherv Gather Scatter"
+#OKBENCH3="Gatherv Scatterv"
+OKBENCH1="Allreduce"
+OKBENCH2="Reduce"
+OKBENCH3="Alltoall"
+OKBENCH4="Bcast Barrier"
+OKBENCH5="Allgather"
+OKBENCH6="Allgatherv"
+OKBENCH7="Gather"
+OKBENCH8="Scatter"
+OKBENCH9="Gatherv"
+OKBENCH0="Scatterv"
+
 NP=16384
 LENFILE=len/len-gather-16384.txt
 MEM=7
 
+#run_bench "$OKBENCH1" $NP $MEM
+#echo
+#run_bench "$OKBENCH2" $NP $MEM
+#echo
+#run_bench "$OKBENCH3" $NP $MEM $LENFILE
 run_bench "$OKBENCH1" $NP $MEM
 echo
 run_bench "$OKBENCH2" $NP $MEM
 echo
-run_bench "$OKBENCH3" $NP $MEM $LENFILE
+run_bench "$OKBENCH3" $NP $MEM
+echo
+run_bench "$OKBENCH4" $NP $MEM
+echo
+run_bench "$OKBENCH5" $NP $MEM
+echo
+run_bench "$OKBENCH6" $NP $MEM
+echo
+run_bench "$OKBENCH7" $NP $MEM
+echo
+run_bench "$OKBENCH8" $NP $MEM
+echo
+run_bench "$OKBENCH9" $NP $MEM $LENFILE
+echo
+run_bench "$OKBENCH0" $NP $MEM $LENFILE
 
 exit

@@ -37,10 +37,25 @@ export MPIR_CVAR_DEVICE_COLLECTIVES=none	#
 export MPIR_CVAR_GATHERV_INTER_SSEND_MIN_PROCS=608256 #
 export MPIR_CVAR_BARRIER_INTRA_ALGORITHM=dissemination
 
-OKBENCH="Allreduce Reduce Alltoall Bcast Barrier Allgather Allgatherv Gather Scatter Scatterv Gatherv"
-OKBENCH1="Allreduce Reduce Alltoall Bcast Barrier"
-OKBENCH2="Allgather Allgatherv Gather Scatter"
-OKBENCH3="Gatherv Scatterv"
+export UTF_BG_REDUCE_MAXLEN=128 # default
+export UTF_BG_BCAST_MAXLEN=128  # default
+export UTF_BG_SHOW_MAXLEN=1
+
+#OKBENCH="Allreduce Reduce Alltoall Bcast Barrier Allgather Allgatherv Gather Scatter Scatterv Gatherv"
+#OKBENCH1="Allreduce Reduce Alltoall Bcast Barrier"
+#OKBENCH2="Allgather Allgatherv Gather Scatter"
+#OKBENCH3="Gatherv Scatterv"
+OKBENCH1="Allreduce"
+OKBENCH2="Reduce"
+OKBENCH3="Alltoall"
+OKBENCH4="Bcast Barrier"
+OKBENCH5="Allgather"
+OKBENCH6="Allgatherv"
+OKBENCH7="Gather"
+OKBENCH8="Scatter"
+OKBENCH9="Gatherv"
+OKBENCH0="Scatterv"
+
 NP=32768
 LENFILE=len/len-gather-8192.txt
 MEM=7
@@ -50,5 +65,19 @@ echo
 run_bench "$OKBENCH2" $NP $MEM $LENFILE
 echo
 run_bench "$OKBENCH3" $NP $MEM $LENFILE
+echo
+run_bench "$OKBENCH4" $NP $MEM $LENFILE
+echo
+run_bench "$OKBENCH5" $NP $MEM $LENFILE
+echo
+run_bench "$OKBENCH6" $NP $MEM $LENFILE
+echo
+run_bench "$OKBENCH7" $NP $MEM $LENFILE
+echo
+run_bench "$OKBENCH8" $NP $MEM $LENFILE
+echo
+run_bench "$OKBENCH9" $NP $MEM $LENFILE
+echo
+run_bench "$OKBENCH0" $NP $MEM $LENFILE
 
 exit
