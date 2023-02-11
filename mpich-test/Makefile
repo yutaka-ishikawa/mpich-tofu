@@ -2,6 +2,8 @@
 
 all:
 	@echo "make run or make run-clean"
+save:
+	cp -rp /home/z30485/z30485/work/mpich-org .
 run-comm:
 	pjsub comm/batch-scripts/run-mpichtest-*.sh 
 run-threads:
