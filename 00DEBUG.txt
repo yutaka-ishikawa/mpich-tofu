@@ -1,4 +1,7 @@
    $ export MPICH_SRC=/home/xxx/work/mpich-tofu/
+0) mpich-tofu
+   $ cd $MPICH_SRC
+   $ git pull
 1) utf
    # export UTF_ARCH=fugaku or others
    $ cd $MPICH_SRC/utf
