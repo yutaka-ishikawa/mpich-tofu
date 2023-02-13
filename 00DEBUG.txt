@@ -1,7 +1,22 @@
+   $ export MPICH_SRC=/home/xxx/work/mpich-tofu/
 1) utf
-  git checkout debug0
-2) MPICH environment setting
+   # export UTF_ARCH=fugaku or others
+   $ cd $MPICH_SRC/utf
+   $ git pull
+   $ git checkout debug0
+   $ (cd src; make; make install)
+   $ (cd src/mpi_vbg; make; make install)
+2) libfabric
+   $ cd $MPICH_SRC/mpich/module/libfabric
+   $ git pull
+   $ cd $MPICH_SRC
+   $ (cd mpich; date; make -j 8 V=1 >../log/cmp-mpich-gcc.txt 2>&1; date)
+   $ (cd mpich; make V=1 install > ../log/inst-mpich-gcc.txt 2>&1; date)
+
+3) MPICH environment setting
   (1) Tagged
+	export MPICH_HOME=$HOME/mpich-tofu/
+	export PATH=$PATH:$MPICH_HOME/bin:$PATH
   	export MPIR_CVAR_CH4_OFI_CAPABILITY_SETS_DEBUG=1
 	export MPICH_TOFU_SHOW_PARAMS=1
 	export UTF_INFO=1
@@ -12,6 +27,8 @@
 	export MPIR_CVAR_CH4_OFI_ENABLE_TAGGED=1
 	export UTOFU_SWAP_PROTECT=1
   (2) AM
+	export MPICH_HOME=$HOME/mpich-tofu/
+	export PATH=$PATH:$MPICH_HOME/bin:$PATH
 	export MPIR_CVAR_CH4_OFI_CAPABILITY_SETS_DEBUG=1
 	export MPICH_TOFU_SHOW_PARAMS=1
 	export UTF_TOFU_SHOW_RCOUNT=1
@@ -27,6 +44,8 @@
 	  utf/build/{libutf.so,libmpi_vbg.so}
 	- MPICH test
 	  mpich-test/mpich-org/{*.sh, *.txt, Makefile}
+===========================================================================================
+	/opt/FJSVxos/devkit/aarch64/rfs/usr/include/utofu.h
 ===========================================================================================
 $ cd ~/work/mpich-tofu-org/mpich-test/mpich-org
 $ make mpich-copy
