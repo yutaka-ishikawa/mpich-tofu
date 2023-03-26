@@ -40,7 +40,9 @@ If you already read this file, you have already cloned mpich-tofu
    $ cd $EXAMPLE_HOME/work/gcc/mpich-tofu
    $ git clone https://github.com/yutaka-ishikawa/utf.git
    $ cd utf
-   $ git checkout fast
+##   $ git checkout fast
+## The debug0 branch is currently stable
+   $ git checkout debug0
    $ cd $EXAMPLE_HOME/work/gcc/mpich-tofu
  3) mpich
    $ git clone --recursive https://github.com/pmodels/mpich.git
