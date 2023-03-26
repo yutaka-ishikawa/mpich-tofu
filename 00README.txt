@@ -46,6 +46,10 @@ If you already read this file, you have already cloned mpich-tofu
    $ cd $EXAMPLE_HOME/work/gcc/mpich-tofu
  3) mpich
    $ git clone --recursive https://github.com/pmodels/mpich.git
+   # izem module might be missing
+     $ cd mpich/modules
+     $ git clone https://github.com/pmodels/izem
+     $ cd ../..
    $ cd mpich
    $ git checkout 169740255305011686c1781e3554f83eea448212
    $ cd modules/json-c
