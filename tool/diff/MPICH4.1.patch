@@ -1,0 +1,1091 @@
+diff --git a/autogen.sh b/autogen.sh
+old mode 100755
+new mode 100644
+index 9e75f925e..91873e3b0
+--- a/autogen.sh
++++ b/autogen.sh
+@@ -566,6 +566,8 @@ autoreconf_amdir() {
+             _patch_libtool $_dir/confdb/libtool.m4 oracle-fort.patch
+             _patch_libtool $_dir/confdb/libtool.m4 flang.patch
+             _patch_libtool $_dir/confdb/libtool.m4 arm-compiler.patch
++            _patch_libtool $_dir/confdb/libtool.m4 fujitsu.patch
++            _patch_libtool $_dir/confdb/libtool.m4 f77.patch
+             _patch_libtool $_dir/confdb/libtool.m4 ibm-xlf.patch
+         fi
+ 
+@@ -653,14 +655,14 @@ AC_INIT(foo,1.0)
+ AC_PROG_LIBTOOL
+ AC_OUTPUT
+ _EOF
+-            AUTORECONF="$autoreconf -I $libtoolm4dir"
++            AUTORECONF="$autoreconf -B $libtoolm4dir"
+             if (cd .tmp && $AUTORECONF -ivf >/dev/null 2>&1) ; then
+                 new_autoreconf_works=yes
+             fi
+             rm -rf .tmp
+         fi
+         echo "$new_autoreconf_works"
+-        # If autoreconf accepts -I <libtool's m4 dir> correctly, use -I.
++        # If autoreconf accepts -B <libtool's m4 dir> correctly, use -B.
+         # If not, run libtoolize before autoreconf (i.e. for autoconf <= 2.63)
+         # This test is more general than checking the autoconf version.
+         if [ "$new_autoreconf_works" != "yes" ] ; then
+diff --git a/src/mpi/coll/allgather/allgather_intra_recursive_doubling.c b/src/mpi/coll/allgather/allgather_intra_recursive_doubling.c
+index 447cb96ac..23791b055 100644
+--- a/src/mpi/coll/allgather/allgather_intra_recursive_doubling.c
++++ b/src/mpi/coll/allgather/allgather_intra_recursive_doubling.c
+@@ -34,6 +34,7 @@ int MPIR_Allgather_intra_recursive_doubling(const void *sendbuf,
+     int dst;
+     MPI_Status status;
+     int mask, dst_tree_root, my_tree_root, nprocs_completed, k, tmp_mask, tree_root;
++#define TOFU
+ 
+     comm_size = comm_ptr->local_size;
+     rank = comm_ptr->rank;
+@@ -46,12 +47,21 @@ int MPIR_Allgather_intra_recursive_doubling(const void *sendbuf,
+ 
+     MPIR_Datatype_get_extent_macro(recvtype, recvtype_extent);
+ 
++#ifdef TOFU
++    if (sendbuf != MPI_IN_PLACE) {
++        mpi_errno = MPIR_Localcopy(sendbuf, sendcount, sendtype,
++                                   ((char *) recvbuf +
++                                    (size_t) rank * recvcount * recvtype_extent), recvcount, recvtype);
++        MPIR_ERR_CHECK(mpi_errno);
++    }
++#else
+     if (sendbuf != MPI_IN_PLACE) {
+         mpi_errno = MPIR_Localcopy(sendbuf, sendcount, sendtype,
+                                    ((char *) recvbuf +
+                                     rank * recvcount * recvtype_extent), recvcount, recvtype);
+         MPIR_ERR_CHECK(mpi_errno);
+     }
++#endif
+ 
+     curr_cnt = recvcount;
+ 
+@@ -143,9 +153,11 @@ int MPIR_Allgather_intra_recursive_doubling(const void *sendbuf,
+                  * can send if they have the data */
+                 if ((dst > rank) && (rank < tree_root + nprocs_completed)
+                     && (dst >= tree_root + nprocs_completed)) {
++		    //fprintf(stderr, "calling MPIC_Send ((char *) recvbuf + offset) = %p\n", ((char *) recvbuf + offset)); fflush(stderr);
+                     mpi_errno = MPIC_Send(((char *) recvbuf + offset),
+                                           last_recv_cnt,
+                                           recvtype, dst, MPIR_ALLGATHER_TAG, comm_ptr, errflag);
++		    //fprintf(stderr, "\tDONE\n"); fflush(stderr);
+                     /* last_recv_cnt was set in the previous
+                      * receive. that's the amount of data to be
+                      * sent now. */
+@@ -163,10 +175,12 @@ int MPIR_Allgather_intra_recursive_doubling(const void *sendbuf,
+                 else if ((dst < rank) &&
+                          (dst < tree_root + nprocs_completed) &&
+                          (rank >= tree_root + nprocs_completed)) {
++		    //fprintf(stderr, "calling MPIC_Recv ((char *) recvbuf + offset) = %p\n", ((char *) recvbuf + offset));  fflush(stderr);
+                     mpi_errno = MPIC_Recv(((char *) recvbuf + offset),
+-                                          (comm_size - (my_tree_root + mask)) * recvcount,
++                                          (MPI_Aint) (comm_size - (my_tree_root + mask)) * recvcount,
+                                           recvtype, dst,
+                                           MPIR_ALLGATHER_TAG, comm_ptr, &status, errflag);
++		    //fprintf(stderr, "\tDONE\n"); fflush(stderr);
+                     /* nprocs_completed is also equal to the
+                      * no. of processes whose data we don't have */
+                     if (mpi_errno) {
+diff --git a/src/mpi/coll/allgather/allgather_intra_ring.c b/src/mpi/coll/allgather/allgather_intra_ring.c
+index 5e0c7bd42..53b8c430e 100644
+--- a/src/mpi/coll/allgather/allgather_intra_ring.c
++++ b/src/mpi/coll/allgather/allgather_intra_ring.c
+@@ -41,9 +41,22 @@ int MPIR_Allgather_intra_ring(const void *sendbuf,
+ 
+     /* First, load the "local" version in the recvbuf. */
+     if (sendbuf != MPI_IN_PLACE) {
++	// fprintf(stderr, "%s: callin MPIR_Localcopy sendbuf(%p) recvbuf(%p) rank(%d) recvcount(%ld) recvtype_extent(%ld)\n", __func__, sendbuf, recvbuf, rank, recvcount, recvtype_extent); fflush(stderr);
++	//{
++	//char	*bf1 = ((char *) recvbuf + (rank * recvcount * recvtype_extent));
++	//char	*bf2 = ((char *) recvbuf + ((size_t) rank * (size_t) recvcount * (size_t) recvtype_extent));
++	//fprintf(stderr, "\t recvbuf=%p bf1=%p bf2=%p\n", recvbuf, bf1, bf2); fflush(stderr);
++	//}
++#define TOFU
++#ifdef TOFU
++        mpi_errno = MPIR_Localcopy(sendbuf, sendcount, sendtype,
++                                   ((char *) recvbuf +
++                                    (size_t) rank * (size_t) recvcount * (size_t) recvtype_extent), recvcount, recvtype);
++#else
+         mpi_errno = MPIR_Localcopy(sendbuf, sendcount, sendtype,
+                                    ((char *) recvbuf +
+                                     rank * recvcount * recvtype_extent), recvcount, recvtype);
++#endif
+         MPIR_ERR_CHECK(mpi_errno);
+     }
+ 
+@@ -57,6 +70,19 @@ int MPIR_Allgather_intra_ring(const void *sendbuf,
+     j = rank;
+     jnext = left;
+     for (i = 1; i < comm_size; i++) {
++	//fprintf(stderr, "%s: calling MPIC_Sendrecv right(%d) left(%d)\n", __func__, right, left); fflush(stderr);
++#define TOFU
++#ifdef TOFU
++	//fprintf(stderr, "%s:\t bf=%p\n", __func__, ((char *) recvbuf + (size_t) jnext * (size_t) recvcount * (size_t) recvtype_extent)); fflush(stderr);
++        mpi_errno = MPIC_Sendrecv(((char *) recvbuf +
++                                   (size_t) j * (size_t) recvcount * (size_t) recvtype_extent),
++                                  recvcount, recvtype, right,
++                                  MPIR_ALLGATHER_TAG,
++                                  ((char *) recvbuf +
++                                   (size_t) jnext * (size_t) recvcount * (size_t) recvtype_extent),
++                                  recvcount, recvtype, left,
++                                  MPIR_ALLGATHER_TAG, comm_ptr, MPI_STATUS_IGNORE, errflag);
++#else
+         mpi_errno = MPIC_Sendrecv(((char *) recvbuf +
+                                    j * recvcount * recvtype_extent),
+                                   recvcount, recvtype, right,
+@@ -65,6 +91,7 @@ int MPIR_Allgather_intra_ring(const void *sendbuf,
+                                    jnext * recvcount * recvtype_extent),
+                                   recvcount, recvtype, left,
+                                   MPIR_ALLGATHER_TAG, comm_ptr, MPI_STATUS_IGNORE, errflag);
++#endif
+         if (mpi_errno) {
+             /* for communication errors, just record the error but continue */
+             *errflag =
+@@ -76,6 +103,7 @@ int MPIR_Allgather_intra_ring(const void *sendbuf,
+         j = jnext;
+         jnext = (comm_size + jnext - 1) % comm_size;
+     }
++    //fprintf(stderr, "%s:  DONE\n", __func__); fflush(stderr);
+ 
+   fn_exit:
+     if (mpi_errno_ret)
+diff --git a/src/mpi/coll/allgatherv/allgatherv_intra_ring.c b/src/mpi/coll/allgatherv/allgatherv_intra_ring.c
+index cad5a0a80..2cad7aa27 100644
+--- a/src/mpi/coll/allgatherv/allgatherv_intra_ring.c
++++ b/src/mpi/coll/allgatherv/allgatherv_intra_ring.c
+@@ -52,9 +52,25 @@ int MPIR_Allgatherv_intra_ring(const void *sendbuf,
+ 
+     if (sendbuf != MPI_IN_PLACE) {
+         /* First, load the "local" version in the recvbuf. */
++#define TOFU
++#ifdef TOFU
++	/*
++	fprintf(stderr, "%s: TOFU sendbuf(%p) sendcount(%d) recvbuf(%p) "
++		"revcounts(%d) displs[%d] = %d recvtype_extent = %d "
++		"(recvbuf + displs[rank] * recvtype_exent) = %p\n"
++		"((char *) recvbuf + ((size_t) displs[rank]) * ((size_t) recvtype_extent)) = %p\n",
++		__func__, sendbuf, sendcount, recvbuf, recvcounts, rank, displs[rank], recvtype_extent,
++		((char *) recvbuf + displs[rank] * recvtype_extent),
++		((char *) recvbuf + ((size_t) displs[rank]) * ((size_t) recvtype_extent))); fflush(stderr);
++	*/
++        mpi_errno = MPIR_Localcopy(sendbuf, sendcount, sendtype,
++                                   ((char *) recvbuf + ((size_t) displs[rank]) * ((size_t) recvtype_extent)),
++                                   recvcounts[rank], recvtype);
++#else
+         mpi_errno = MPIR_Localcopy(sendbuf, sendcount, sendtype,
+                                    ((char *) recvbuf + displs[rank] * recvtype_extent),
+                                    recvcounts[rank], recvtype);
++#endif
+         MPIR_ERR_CHECK(mpi_errno);
+     }
+ 
+@@ -96,8 +112,14 @@ int MPIR_Allgatherv_intra_ring(const void *sendbuf,
+                    chunk_count) ? chunk_count : (recvcounts[ridx] - roffset);
+ 
+         char *sbuf, *rbuf;
++#ifdef TOFU
++        sbuf = (char *) recvbuf + (size_t) ((((size_t) displs[sidx]) + ((size_t) soffset)) * (size_t) recvtype_extent);
++        rbuf = (char *) recvbuf + (size_t) ((((size_t)displs[ridx]) + ((size_t) roffset)) * (size_t) recvtype_extent);
++	//fprintf(stderr, "%s: TOFU sbuf = %p, %p, rbuf = %p, %p\n", sbuf, (char *) recvbuf + ((displs[sidx] + soffset) * recvtype_extent), rbuf, (char *) recvbuf + ((displs[ridx] + roffset) * recvtype_extent)); fflush(stderr);
++#else
+         sbuf = (char *) recvbuf + ((displs[sidx] + soffset) * recvtype_extent);
+         rbuf = (char *) recvbuf + ((displs[ridx] + roffset) * recvtype_extent);
++#endif
+ 
+         /* Protect against wrap-around of indices */
+         if (!tosend)
+diff --git a/src/mpi/coll/allreduce/allreduce_intra_recursive_doubling.c b/src/mpi/coll/allreduce/allreduce_intra_recursive_doubling.c
+index ad5701dfc..f396b70e0 100644
+--- a/src/mpi/coll/allreduce/allreduce_intra_recursive_doubling.c
++++ b/src/mpi/coll/allreduce/allreduce_intra_recursive_doubling.c
+@@ -82,9 +82,15 @@ int MPIR_Allreduce_intra_recursive_doubling(const void *sendbuf,
+              * doubling */
+             newrank = -1;
+         } else {        /* odd */
++#ifdef UTF_DEBUG_20201229
++	    fprintf(stderr, "%s: YI TOFU calling MPIC_Recv TAG(%d)\n", __func__, MPIR_ALLREDUCE_TAG);
++#endif
+             mpi_errno = MPIC_Recv(tmp_buf, count,
+                                   datatype, rank - 1,
+                                   MPIR_ALLREDUCE_TAG, comm_ptr, MPI_STATUS_IGNORE, errflag);
++#ifdef UTF_DEBUG_20201229
++	    fprintf(stderr, "%s: YI TOFU return calling MPIC_Recv TAG(%d)\n", __func__, MPIR_ALLREDUCE_TAG);
++#endif
+             if (mpi_errno) {
+                 /* for communication errors, just record the error but continue */
+                 *errflag =
+@@ -124,10 +130,16 @@ int MPIR_Allreduce_intra_recursive_doubling(const void *sendbuf,
+ 
+             /* Send the most current data, which is in recvbuf. Recv
+              * into tmp_buf */
++#ifdef UTF_DEBUG_20201229
++	    fprintf(stderr, "%s: YI TOFU calling MPIC_Sendrecv TAG(%d)\n", __func__, MPIR_ALLREDUCE_TAG);
++#endif
+             mpi_errno = MPIC_Sendrecv(recvbuf, count, datatype,
+                                       dst, MPIR_ALLREDUCE_TAG, tmp_buf,
+                                       count, datatype, dst,
+                                       MPIR_ALLREDUCE_TAG, comm_ptr, MPI_STATUS_IGNORE, errflag);
++#ifdef UTF_DEBUG_20201229
++	    fprintf(stderr, "%s: YI TOFU return calling MPIC_Sendrecv TAG(%d)\n", __func__, MPIR_ALLREDUCE_TAG);
++#endif
+             if (mpi_errno) {
+                 /* for communication errors, just record the error but continue */
+                 *errflag =
+@@ -142,11 +154,23 @@ int MPIR_Allreduce_intra_recursive_doubling(const void *sendbuf,
+ 
+             if (is_commutative || (dst < rank)) {
+                 /* op is commutative OR the order is already right */
++#ifdef UTF_DEBUG_20201229
++		fprintf(stderr, "%s: YI TOFU calling MPIR_Reduce_local 1\n", __func__);
++#endif
+                 mpi_errno = MPIR_Reduce_local(tmp_buf, recvbuf, count, datatype, op);
++#ifdef UTF_DEBUG_20201229
++		fprintf(stderr, "%s: YI TOFU return calling MPIR_Reduce_local 1\n", __func__);
++#endif
+                 MPIR_ERR_CHECK(mpi_errno);
+             } else {
+                 /* op is noncommutative and the order is not right */
++#ifdef UTF_DEBUG_20201229
++		fprintf(stderr, "%s: YI TOFU calling MPIR_Reduce_local 2\n", __func__);
++#endif
+                 mpi_errno = MPIR_Reduce_local(recvbuf, tmp_buf, count, datatype, op);
++#ifdef UTF_DEBUG_20201229
++		fprintf(stderr, "%s: YI TOFU reurn calling MPIR_Reduce_local 2\n", __func__);
++#endif
+                 MPIR_ERR_CHECK(mpi_errno);
+ 
+                 /* copy result back into recvbuf */
+@@ -163,10 +187,17 @@ int MPIR_Allreduce_intra_recursive_doubling(const void *sendbuf,
+         if (rank % 2)   /* odd */
+             mpi_errno = MPIC_Send(recvbuf, count,
+                                   datatype, rank - 1, MPIR_ALLREDUCE_TAG, comm_ptr, errflag);
+-        else    /* even */
++        else {   /* even */
++#ifdef UTF_DEBUG_20201229
++	    fprintf(stderr, "%s: YI TOFU calling MPIC_Recv TAG(%d) 2\n", __func__, MPIR_ALLREDUCE_TAG);
++#endif
+             mpi_errno = MPIC_Recv(recvbuf, count,
+                                   datatype, rank + 1,
+                                   MPIR_ALLREDUCE_TAG, comm_ptr, MPI_STATUS_IGNORE, errflag);
++#ifdef UTF_DEBUG_20201229
++	    fprintf(stderr, "%s: YI TOFU return calling MPIC_Recv TAG(%d) 2\n", __func__, MPIR_ALLREDUCE_TAG);
++#endif
++	}
+         if (mpi_errno) {
+             /* for communication errors, just record the error but continue */
+             *errflag =
+diff --git a/src/mpi/coll/alltoall/alltoall_intra_brucks.c b/src/mpi/coll/alltoall/alltoall_intra_brucks.c
+index 137de35f3..8372a2ccc 100644
+--- a/src/mpi/coll/alltoall/alltoall_intra_brucks.c
++++ b/src/mpi/coll/alltoall/alltoall_intra_brucks.c
+@@ -51,11 +51,28 @@ int MPIR_Alltoall_intra_brucks(const void *sendbuf,
+ 
+     /* allocate temporary buffer */
+     MPIR_Datatype_get_size_macro(recvtype, recvtype_sz);
++#define TOFU
++#ifdef TOFU
++    pack_size = (MPI_Aint) recvcount * comm_size * recvtype_sz;
++#else
+     pack_size = recvcount * comm_size * recvtype_sz;
++#endif
+     MPIR_CHKLMEM_MALLOC(tmp_buf, void *, pack_size, mpi_errno, "tmp_buf", MPL_MEM_BUFFER);
+ 
+     /* Do Phase 1 of the algorithim. Shift the data blocks on process i
+      * upwards by a distance of i blocks. Store the result in recvbuf. */
++#ifdef TOFU
++    mpi_errno = MPIR_Localcopy((char *) sendbuf +
++                               (MPI_Aint) rank * sendcount * sendtype_extent,
++                               (MPI_Aint) (comm_size - rank) * sendcount, sendtype, recvbuf,
++                               (MPI_Aint) (comm_size - rank) * recvcount, recvtype);
++    MPIR_ERR_CHECK(mpi_errno);
++    mpi_errno = MPIR_Localcopy(sendbuf, (MPI_Aint) rank * sendcount, sendtype,
++                               (char *) recvbuf +
++                               (MPI_Aint) (comm_size - rank) * recvcount * recvtype_extent,
++                               (MPI_Aint) rank * recvcount, recvtype);
++    MPIR_ERR_CHECK(mpi_errno);
++#else
+     mpi_errno = MPIR_Localcopy((char *) sendbuf +
+                                rank * sendcount * sendtype_extent,
+                                (comm_size - rank) * sendcount, sendtype, recvbuf,
+@@ -63,9 +80,10 @@ int MPIR_Alltoall_intra_brucks(const void *sendbuf,
+     MPIR_ERR_CHECK(mpi_errno);
+     mpi_errno = MPIR_Localcopy(sendbuf, rank * sendcount, sendtype,
+                                (char *) recvbuf +
+-                               (comm_size - rank) * recvcount * recvtype_extent,
++                               (MPI_Aint) (comm_size - rank) * recvcount * recvtype_extent,
+                                rank * recvcount, recvtype);
+     MPIR_ERR_CHECK(mpi_errno);
++#endif
+     /* Input data is now stored in recvbuf with datatype recvtype */
+ 
+     /* Now do Phase 2, the communication phase. It takes
+@@ -103,7 +121,11 @@ int MPIR_Alltoall_intra_brucks(const void *sendbuf,
+         mpi_errno = MPIR_Type_commit_impl(&newtype);
+         MPIR_ERR_CHECK(mpi_errno);
+ 
++#ifdef TOFU
++        newtype_sz = (MPI_Aint) count * recvcount * recvtype_sz;
++#else
+         newtype_sz = count * recvcount * recvtype_sz;
++#endif
+         mpi_errno = MPIR_Localcopy(recvbuf, 1, newtype, tmp_buf, newtype_sz, MPI_BYTE);
+         MPIR_ERR_CHECK(mpi_errno);
+ 
+@@ -125,7 +147,18 @@ int MPIR_Alltoall_intra_brucks(const void *sendbuf,
+     }
+ 
+     /* Rotate blocks in recvbuf upwards by (rank + 1) blocks */
+-    mpi_errno = MPIR_Localcopy((char *) recvbuf + (rank + 1) * recvcount * recvtype_extent,
++#ifdef TOFU
++    mpi_errno = MPIR_Localcopy((char *) recvbuf + (MPI_Aint) (rank + 1) * recvcount * recvtype_extent,
++                               (MPI_Aint) (comm_size - rank - 1) * recvcount, recvtype, tmp_buf,
++                               (MPI_Aint) (comm_size - rank - 1) * recvcount * recvtype_sz, MPI_BYTE);
++    MPIR_ERR_CHECK(mpi_errno);
++    mpi_errno = MPIR_Localcopy(recvbuf, (MPI_Aint) (rank + 1) * recvcount, recvtype,
++                               (char *) tmp_buf + (MPI_Aint) (comm_size - rank - 1)
++                               * recvcount * recvtype_sz,
++                               (MPI_Aint) (rank + 1) * recvcount * recvtype_sz, MPI_BYTE);
++    MPIR_ERR_CHECK(mpi_errno);
++#else
++    mpi_errno = MPIR_Localcopy((char *) recvbuf + (MPI_Aint) (rank + 1) * recvcount * recvtype_extent,
+                                (comm_size - rank - 1) * recvcount, recvtype, tmp_buf,
+                                (comm_size - rank - 1) * recvcount * recvtype_sz, MPI_BYTE);
+     MPIR_ERR_CHECK(mpi_errno);
+@@ -134,16 +167,25 @@ int MPIR_Alltoall_intra_brucks(const void *sendbuf,
+                                * recvcount * recvtype_sz,
+                                (rank + 1) * recvcount * recvtype_sz, MPI_BYTE);
+     MPIR_ERR_CHECK(mpi_errno);
++#endif
+ 
+     /* Blocks are in the reverse order now (comm_size-1 to 0).
+      * Reorder them to (0 to comm_size-1) and store them in recvbuf. */
+ 
+     for (i = 0; i < comm_size; i++) {
+-        mpi_errno = MPIR_Localcopy((char *) tmp_buf + i * recvcount * recvtype_sz,
+-                                   recvcount * recvtype_sz, MPI_BYTE,
+-                                   (char *) recvbuf + (comm_size - i -
++#ifdef TOFU
++        mpi_errno = MPIR_Localcopy((char *) tmp_buf + (MPI_Aint) i * recvcount * recvtype_sz,
++                                   (MPI_Aint) recvcount * recvtype_sz, MPI_BYTE,
++                                   (char *) recvbuf + (MPI_Aint) (comm_size - i -
++                                                       1) * recvcount * recvtype_extent, recvcount,
++                                   recvtype);
++#else
++        mpi_errno = MPIR_Localcopy((char *) tmp_buf + (MPI_Aint) i * recvcount * recvtype_sz,
++                                   (MPI_Aint) recvcount * recvtype_sz, MPI_BYTE,
++                                   (char *) recvbuf + (MPI_Aint) (comm_size - i -
+                                                        1) * recvcount * recvtype_extent, recvcount,
+                                    recvtype);
++#endif
+         MPIR_ERR_CHECK(mpi_errno);
+     }
+ 
+diff --git a/src/mpi/coll/barrier/barrier_intra_k_dissemination.c b/src/mpi/coll/barrier/barrier_intra_k_dissemination.c
+index 088604200..aff58069f 100644
+--- a/src/mpi/coll/barrier/barrier_intra_k_dissemination.c
++++ b/src/mpi/coll/barrier/barrier_intra_k_dissemination.c
+@@ -16,6 +16,14 @@
+  * process i sends to process (i + 2^k) % p and receives from process
+  * (i - 2^k + p) % p.
+  */
++#define DEBUG_TOFU
++#ifdef DEBUG_TOFU
++//__attribute__((visibility ("default"))) int tofu_barrier_cnt;
++//__attribute__((visibility ("default"))) int tofu_barrier_do;
++//__attribute__((visibility ("default"))) int tofu_barrier_src;
++//__attribute__((visibility ("default"))) int tofu_barrier_dst;
++extern int tofu_barrier_cnt, tofu_barrier_do, tofu_barrier_src, tofu_barrier_dst;
++#endif
+ int MPIR_Barrier_intra_dissemination(MPIR_Comm * comm_ptr, MPIR_Errflag_t * errflag)
+ {
+     int size, rank, src, dst, mask, mpi_errno = MPI_SUCCESS;
+@@ -25,15 +33,25 @@ int MPIR_Barrier_intra_dissemination(MPIR_Comm * comm_ptr, MPIR_Errflag_t * errf
+     rank = comm_ptr->rank;
+ 
+     mask = 0x1;
++#ifdef DEBUG_TOFU
++    tofu_barrier_cnt++; tofu_barrier_do = 1;
++#endif
+     while (mask < size) {
+         dst = (rank + mask) % size;
+         src = (rank - mask + size) % size;
++#ifdef DEBUG_TOFU
++	tofu_barrier_src = src; tofu_barrier_dst = dst;
++	// if (rank == 0 && dst == 1) { fprintf(stderr, "Barrier:dst(1)=>"); fflush(stderr); }
++#endif
+         mpi_errno = MPIC_Sendrecv(NULL, 0, MPI_BYTE, dst,
+                                   MPIR_BARRIER_TAG, NULL, 0, MPI_BYTE,
+                                   src, MPIR_BARRIER_TAG, comm_ptr, MPI_STATUS_IGNORE, errflag);
+         MPIR_ERR_COLL_CHECKANDCONT(mpi_errno, *errflag);
+         mask <<= 1;
+     }
++#ifdef DEBUG_TOFU
++    tofu_barrier_do = 0;
++#endif
+ 
+     if (mpi_errno_ret)
+         mpi_errno = mpi_errno_ret;
+diff --git a/src/mpi/coll/gatherv/gatherv_allcomm_linear.c b/src/mpi/coll/gatherv/gatherv_allcomm_linear.c
+index 6226d3853..ff195c309 100644
+--- a/src/mpi/coll/gatherv/gatherv_allcomm_linear.c
++++ b/src/mpi/coll/gatherv/gatherv_allcomm_linear.c
+@@ -35,6 +35,10 @@ cvars:
+  *
+  * Cost = (p-1).alpha + n.((p-1)/p).beta
+ */
++#define DEBUG_TOFU
++#ifdef DEBUG_TOFU
++extern int tofu_gatherv_do, tofu_gatherv_cnt;
++#endif
+ int MPIR_Gatherv_allcomm_linear(const void *sendbuf,
+                                 MPI_Aint sendcount,
+                                 MPI_Datatype sendtype,
+@@ -56,6 +60,9 @@ int MPIR_Gatherv_allcomm_linear(const void *sendbuf,
+ 
+     rank = comm_ptr->rank;
+ 
++#ifdef DEBUG_TOFU
++    tofu_gatherv_do = 1; tofu_gatherv_cnt++;
++#endif
+     /* If rank == root, then I recv lots, otherwise I send */
+     if (((comm_ptr->comm_kind == MPIR_COMM_KIND__INTRACOMM) && (root == rank)) ||
+         ((comm_ptr->comm_kind == MPIR_COMM_KIND__INTERCOMM) && (root == MPI_ROOT))) {
+@@ -125,7 +132,10 @@ int MPIR_Gatherv_allcomm_linear(const void *sendbuf,
+                 min_procs = comm_size + 1;      /* Disable ssend */
+             else if (min_procs == 0)    /* backwards compatibility, use default value */
+                 MPIR_CVAR_GET_DEFAULT_INT(MPIR_CVAR_GATHERV_INTER_SSEND_MIN_PROCS, &min_procs);
+-
++#define TOFU_MOD
++#ifdef TOFU_MOD
++	    usleep(rank*2);
++#endif
+             if (comm_size >= min_procs) {
+                 mpi_errno = MPIC_Ssend(sendbuf, sendcount, sendtype, root,
+                                        MPIR_GATHERV_TAG, comm_ptr, errflag);
+@@ -152,8 +162,10 @@ int MPIR_Gatherv_allcomm_linear(const void *sendbuf,
+         }
+     }
+ 
+-
+   fn_exit:
++#ifdef DEBUG_TOFU
++    tofu_gatherv_do = 0;
++#endif
+     MPIR_CHKLMEM_FREEALL();
+     if (mpi_errno_ret)
+         mpi_errno = mpi_errno_ret;
+diff --git a/src/mpi/coll/helper_fns.c b/src/mpi/coll/helper_fns.c
+index 9889c9fd6..140cbc4b4 100644
+--- a/src/mpi/coll/helper_fns.c
++++ b/src/mpi/coll/helper_fns.c
+@@ -181,9 +181,11 @@ int MPIC_Recv(void *buf, MPI_Aint count, MPI_Datatype datatype, int source, int
+         status = &mystatus;
+ 
+     mpi_errno = MPID_Recv(buf, count, datatype, source, tag, comm_ptr, attr, status, &request_ptr);
++    if (mpi_errno) fprintf(stderr, "%s TOFUTOFU MPID_Recv mpi_errno(%d)\n", __func__, mpi_errno);
+     MPIR_ERR_CHECK(mpi_errno);
+     if (request_ptr) {
+         mpi_errno = MPIC_Wait(request_ptr, errflag);
++	if (mpi_errno) fprintf(stderr, "%s TOFUTOFU MPIC_Wait mpi_errno(%d)\n", __func__, mpi_errno);
+         MPIR_ERR_CHECK(mpi_errno);
+ 
+         *status = request_ptr->status;
+@@ -274,6 +276,12 @@ int MPIC_Ssend(const void *buf, MPI_Aint count, MPI_Datatype datatype, int dest,
+     /* --END ERROR HANDLING-- */
+ }
+ 
++#define TOFU
++#ifdef TOFU
++int tofu_sendrecv_wait_send, tofu_sendrecv_wait_recv;
++int tofu_sendrecv_wait_prevsend, tofu_sendrecv_wait_prevrecv;
++#endif
++
+ int MPIC_Sendrecv(const void *sendbuf, MPI_Aint sendcount, MPI_Datatype sendtype,
+                   int dest, int sendtag, void *recvbuf, MPI_Aint recvcount,
+                   MPI_Datatype recvtype, int source, int recvtag,
+@@ -304,8 +312,14 @@ int MPIC_Sendrecv(const void *sendbuf, MPI_Aint sendcount, MPI_Datatype sendtype
+         recv_req_ptr = MPIR_Request_create_complete(MPIR_REQUEST_KIND__RECV);
+         MPIR_ERR_CHKANDSTMT(recv_req_ptr == NULL, mpi_errno, MPIX_ERR_NOREQ, goto fn_fail,
+                             "**nomemreq");
++#ifdef UTF_DEBUG_20201229
++	fprintf(stderr, "%s:\t set_procnull\n", __func__);
++#endif
+         MPIR_Status_set_procnull(&recv_req_ptr->status);
+     } else {
++#ifdef UTF_DEBUG_20201229
++	fprintf(stderr, "%s:\t calling MPID_Irecv from rank(%d)\n", __func__, source);
++#endif
+         mpi_errno = MPID_Irecv(recvbuf, recvcount, recvtype, source, recvtag,
+                                comm_ptr, attr, &recv_req_ptr);
+         MPIR_ERR_CHECK(mpi_errno);
+@@ -313,18 +327,47 @@ int MPIC_Sendrecv(const void *sendbuf, MPI_Aint sendcount, MPI_Datatype sendtype
+ 
+     /* If dest is MPI_PROC_NULL, create a completed request and return. */
+     if (unlikely(dest == MPI_PROC_NULL)) {
++#ifdef UTF_DEBUG_20201229
++	fprintf(stderr, "%s:\t des=proc_null request completed\n", __func__);
++#endif
+         send_req_ptr = MPIR_Request_create_complete(MPIR_REQUEST_KIND__SEND);
+         MPIR_ERR_CHKANDSTMT(send_req_ptr == NULL, mpi_errno, MPIX_ERR_NOREQ, goto fn_fail,
+                             "**nomemreq");
+     } else {
++#ifdef UTF_DEBUG_20201229
++	fprintf(stderr, "%s:\t calling MPID_Isend_coll to rank(%d)\n", __func__, dest);
++#endif
+         mpi_errno = MPID_Isend_coll(sendbuf, sendcount, sendtype, dest, sendtag,
+                                     comm_ptr, attr, &send_req_ptr, errflag);
+         MPIR_ERR_CHECK(mpi_errno);
+     }
+ 
++#ifdef UTF_DEBUG_20201229
++    fprintf(stderr, "%s:\t calling MPIC_wait: sendreq\n", __func__);
++#endif
++#ifdef TOFU
++    tofu_sendrecv_wait_prevsend = tofu_sendrecv_wait_send;
++    tofu_sendrecv_wait_send = dest;
++#endif
+     mpi_errno = MPIC_Wait(send_req_ptr, errflag);
++#ifdef TOFU
++    tofu_sendrecv_wait_send = -dest;
++#endif
+     MPIR_ERR_CHECK(mpi_errno);
++#ifdef UTF_DEBUG_20201229
++    fprintf(stderr, "%s:\t calling MPIC_wait: recvreq\n", __func__);
++#endif
++#ifdef TOFU
++    tofu_sendrecv_wait_prevrecv = tofu_sendrecv_wait_recv;
++    tofu_sendrecv_wait_recv = source;
++#endif
+     mpi_errno = MPIC_Wait(recv_req_ptr, errflag);
++#ifdef UTF_DEBUG_20201229
++    fprintf(stderr, "%s:\t\t done\n", __func__);
++#endif
++#ifdef TOFU
++    tofu_sendrecv_wait_recv = -source;
++#endif
+     if (mpi_errno)
+         MPIR_ERR_POPFATAL(mpi_errno);
+ 
+diff --git a/src/mpi/coll/scatter/scatter_intra_binomial.c b/src/mpi/coll/scatter/scatter_intra_binomial.c
+index 75adbdb9f..b1095c29a 100644
+--- a/src/mpi/coll/scatter/scatter_intra_binomial.c
++++ b/src/mpi/coll/scatter/scatter_intra_binomial.c
+@@ -79,10 +79,33 @@ int MPIR_Scatter_intra_binomial(const void *sendbuf, MPI_Aint sendcount, MPI_Dat
+      * order. */
+     if (rank == root) {
+         if (root != 0) {
++#define TOFU
++#ifdef TOFU
++            tmp_buf_size = nbytes * (MPI_Aint) comm_size;
++#else
+             tmp_buf_size = nbytes * comm_size;
++#endif
+             MPIR_CHKLMEM_MALLOC(tmp_buf, void *, tmp_buf_size, mpi_errno, "tmp_buf",
+                                 MPL_MEM_BUFFER);
++#ifdef TOFU
++            if (recvbuf != MPI_IN_PLACE)
++                mpi_errno = MPIR_Localcopy(((char *) sendbuf + (MPI_Aint) extent * (MPI_Aint) sendcount * (MPI_Aint) rank),
++                                           sendcount * (comm_size - rank), sendtype, tmp_buf,
++                                           (MPI_Aint) nbytes * (MPI_Aint) (comm_size - rank), MPI_BYTE);
++            else
++                mpi_errno = MPIR_Localcopy(((char *) sendbuf + (MPI_Aint) extent * (MPI_Aint) sendcount * (MPI_Aint) (rank + 1)),
++                                           (MPI_Aint) sendcount * (MPI_Aint) (comm_size - rank - 1),
++                                           sendtype, (char *) tmp_buf + nbytes,
++                                           (MPI_Aint) nbytes * (MPI_Aint) (comm_size - rank - 1), MPI_BYTE);
++            MPIR_ERR_CHECK(mpi_errno);
++
++            mpi_errno = MPIR_Localcopy(sendbuf, sendcount * (MPI_Aint) rank, sendtype,
++                                       ((char *) tmp_buf + (MPI_Aint) nbytes * (MPI_Aint) (comm_size - rank)),
++                                       (MPI_Aint) nbytes * rank, MPI_BYTE);
++            MPIR_ERR_CHECK(mpi_errno);
+ 
++            curr_cnt = nbytes * (MPI_Aint) comm_size;
++#else
+             if (recvbuf != MPI_IN_PLACE)
+                 mpi_errno = MPIR_Localcopy(((char *) sendbuf + extent * sendcount * rank),
+                                            sendcount * (comm_size - rank), sendtype, tmp_buf,
+@@ -100,8 +123,14 @@ int MPIR_Scatter_intra_binomial(const void *sendbuf, MPI_Aint sendcount, MPI_Dat
+             MPIR_ERR_CHECK(mpi_errno);
+ 
+             curr_cnt = nbytes * comm_size;
++#endif
+         } else
++#ifdef TOFU
++            curr_cnt = (MPI_Aint) sendcount * comm_size;
++	//fprintf(stderr, "%s: TOFU 1.1 curr_cnt(%ld)\n", __func__, curr_cnt);
++#else
+             curr_cnt = sendcount * comm_size;
++#endif
+     }
+ 
+     /* root has all the data; others have zero so far */
+@@ -161,19 +190,37 @@ int MPIR_Scatter_intra_binomial(const void *sendbuf, MPI_Aint sendcount, MPI_Dat
+                 dst -= comm_size;
+ 
+             if ((rank == root) && (root == 0)) {
++#ifdef TOFU
++                send_subtree_cnt = curr_cnt - (MPI_Aint) sendcount * mask;
++                /* mask is also the size of this process's subtree */
++                mpi_errno = MPIC_Send(((char *) sendbuf +
++                                       (MPI_Aint) extent * (MPI_Aint) sendcount * (MPI_Aint) mask),
++                                      send_subtree_cnt,
++                                      sendtype, dst, MPIR_SCATTER_TAG, comm_ptr, errflag);
++#else
+                 send_subtree_cnt = curr_cnt - sendcount * mask;
+                 /* mask is also the size of this process's subtree */
+                 mpi_errno = MPIC_Send(((char *) sendbuf +
+                                        extent * sendcount * mask),
+                                       send_subtree_cnt,
+                                       sendtype, dst, MPIR_SCATTER_TAG, comm_ptr, errflag);
++#endif
+             } else {
++#ifdef TOFU
++                /* non-zero root and others */
++                send_subtree_cnt = curr_cnt - (MPI_Aint) nbytes * mask;
++                /* mask is also the size of this process's subtree */
++                mpi_errno = MPIC_Send(((char *) tmp_buf + (MPI_Aint) nbytes * mask),
++                                      send_subtree_cnt,
++                                      MPI_BYTE, dst, MPIR_SCATTER_TAG, comm_ptr, errflag);
++#else
+                 /* non-zero root and others */
+                 send_subtree_cnt = curr_cnt - nbytes * mask;
+                 /* mask is also the size of this process's subtree */
+                 mpi_errno = MPIC_Send(((char *) tmp_buf + nbytes * mask),
+                                       send_subtree_cnt,
+                                       MPI_BYTE, dst, MPIR_SCATTER_TAG, comm_ptr, errflag);
++#endif
+             }
+             if (mpi_errno) {
+                 /* for communication errors, just record the error but continue */
+diff --git a/src/mpi/coll/scatterv/scatterv_allcomm_linear.c b/src/mpi/coll/scatterv/scatterv_allcomm_linear.c
+index 28cf880ce..495913de0 100644
+--- a/src/mpi/coll/scatterv/scatterv_allcomm_linear.c
++++ b/src/mpi/coll/scatterv/scatterv_allcomm_linear.c
+@@ -48,8 +48,62 @@ int MPIR_Scatterv_allcomm_linear(const void *sendbuf, const MPI_Aint * sendcount
+                             "starray", MPL_MEM_BUFFER);
+ 
+         reqs = 0;
++#define TOFU_MOD
++#define	NBATCH	48
++#ifdef TOFU_MOD
++	{
++	    int	nbatch = 0;
++	    int	start_pos = 0;
++	    for (i = 0; i < comm_size; i++) {
++		if (sendcounts[i]) {
++		    if ((comm_ptr->comm_kind == MPIR_COMM_KIND__INTRACOMM) && (i == rank)) {
++			if (recvbuf != MPI_IN_PLACE) {
++			    mpi_errno = MPIR_Localcopy(((char *) sendbuf + (MPI_Aint) displs[rank] * extent),
++						       sendcounts[rank], sendtype,
++						       recvbuf, recvcount, recvtype);
++			    MPIR_ERR_CHECK(mpi_errno);
++			}
++		    } else {
++			mpi_errno = MPIC_Isend(((char *) sendbuf + (MPI_Aint) displs[i] * extent),
++					       sendcounts[i], sendtype, i,
++					       MPIR_SCATTERV_TAG, comm_ptr, &reqarray[reqs++], errflag);
++			MPIR_ERR_CHECK(mpi_errno);
++			nbatch++;
++		    }
++		}
++		if (nbatch == NBATCH) { 
++		    mpi_errno = MPIC_Waitall(nbatch, &reqarray[start_pos], &starray[start_pos], errflag);
++		    if (mpi_errno && mpi_errno != MPI_ERR_IN_STATUS)
++			MPIR_ERR_POP(mpi_errno);
++		    start_pos = reqs; nbatch = 0;
++		}
++	    }
++	    if (nbatch > 0) {
++		mpi_errno = MPIC_Waitall(nbatch, &reqarray[start_pos], &starray[start_pos], errflag);
++		if (mpi_errno && mpi_errno != MPI_ERR_IN_STATUS)
++		    MPIR_ERR_POP(mpi_errno);
++	    }
++	}
++#else
+         for (i = 0; i < comm_size; i++) {
+             if (sendcounts[i]) {
++#define TOFU
++#ifdef TOFU
++                if ((comm_ptr->comm_kind == MPIR_COMM_KIND__INTRACOMM) && (i == rank)) {
++                    if (recvbuf != MPI_IN_PLACE) {
++                        mpi_errno = MPIR_Localcopy(((char *) sendbuf + (MPI_Aint) displs[rank] * extent),
++                                                   sendcounts[rank], sendtype,
++                                                   recvbuf, recvcount, recvtype);
++                        MPIR_ERR_CHECK(mpi_errno);
++                    }
++                } else {
++                    mpi_errno = MPIC_Isend(((char *) sendbuf + (MPI_Aint) displs[i] * extent),
++                                           sendcounts[i], sendtype, i,
++                                           MPIR_SCATTERV_TAG, comm_ptr, &reqarray[reqs++], errflag);
++                    MPIR_ERR_CHECK(mpi_errno);
++                }
++            }
++#else
+                 if ((comm_ptr->comm_kind == MPIR_COMM_KIND__INTRACOMM) && (i == rank)) {
+                     if (recvbuf != MPI_IN_PLACE) {
+                         mpi_errno = MPIR_Localcopy(((char *) sendbuf + displs[rank] * extent),
+@@ -64,11 +118,13 @@ int MPIR_Scatterv_allcomm_linear(const void *sendbuf, const MPI_Aint * sendcount
+                     MPIR_ERR_CHECK(mpi_errno);
+                 }
+             }
++#endif /* TODU */
+         }
+         /* ... then wait for *all* of them to finish: */
+         mpi_errno = MPIC_Waitall(reqs, reqarray, starray, errflag);
+         if (mpi_errno && mpi_errno != MPI_ERR_IN_STATUS)
+             MPIR_ERR_POP(mpi_errno);
++#endif /* TODU_MOD */
+         /* --BEGIN ERROR HANDLING-- */
+         if (mpi_errno == MPI_ERR_IN_STATUS) {
+             for (i = 0; i < reqs; i++) {
+diff --git a/src/mpid/ch4/netmod/ofi/globals.c b/src/mpid/ch4/netmod/ofi/globals.c
+index 6adaa727d..13b924886 100644
+--- a/src/mpid/ch4/netmod/ofi/globals.c
++++ b/src/mpid/ch4/netmod/ofi/globals.c
+@@ -301,4 +301,32 @@ MPIDI_OFI_capabilities_t MPIDI_OFI_caps_list[MPIDI_OFI_NUM_SETS] =
+      .counter_wait_objects = MPIDI_OFI_COUNTER_WAIT_OBJECTS_GNI,
+      .major_version = MPIDI_OFI_MAJOR_VERSION_GNI,
+      .minor_version = MPIDI_OFI_MINOR_VERSION_GNI}
++    ,
++    {   /* tofu TOFU */
++     .enable_av_table = MPIDI_OFI_ENABLE_AV_TABLE_TOFU,
++     .enable_scalable_endpoints = MPIDI_OFI_ENABLE_SCALABLE_ENDPOINTS_TOFU,
++     .enable_shared_contexts = MPIDI_OFI_ENABLE_SHARED_CONTEXTS_TOFU,
++     .enable_mr_virt_address = MPIDI_OFI_ENABLE_MR_VIRT_ADDRESS_TOFU,
++     .enable_mr_allocated = MPIDI_OFI_ENABLE_MR_ALLOCATED_TOFU,
++     .enable_mr_prov_key = MPIDI_OFI_ENABLE_MR_PROV_KEY_TOFU,
++     .enable_tagged = MPIDI_OFI_ENABLE_TAGGED_TOFU_INIT,
++     .enable_am = MPIDI_OFI_ENABLE_AM_TOFU,
++     .enable_rma = MPIDI_OFI_ENABLE_RMA_TOFU,
++     .enable_atomics = MPIDI_OFI_ENABLE_ATOMICS_TOFU,
++     .enable_mr_register_null = MPIDI_OFI_ENABLE_MR_REGISTER_NULL_TOFU,
++     .enable_data_auto_progress = MPIDI_OFI_ENABLE_DATA_AUTO_PROGRESS_TOFU,
++     .enable_control_auto_progress = MPIDI_OFI_ENABLE_CONTROL_AUTO_PROGRESS_TOFU,
++     .enable_pt2pt_nopack = MPIDI_OFI_ENABLE_PT2PT_NOPACK_TOFU,
++     .enable_hmem = MPIDI_OFI_ENABLE_HMEM_TOFU,
++     .num_am_buffers = MPIDI_OFI_NUM_AM_BUFFERS_TOFU,
++     .num_optimized_memory_regions = MPIDI_OFI_NUM_OPTIMIZED_MEMORY_REGIONS_TOFU,
++     .max_endpoints = MPIDI_OFI_MAX_ENDPOINTS_TOFU,
++     .max_endpoints_bits = MPIDI_OFI_MAX_ENDPOINTS_BITS_TOFU,
++     .fetch_atomic_iovecs = MPIDI_OFI_FETCH_ATOMIC_IOVECS_TOFU,
++     .context_bits = MPIDI_OFI_CONTEXT_BITS_TOFU,
++     .source_bits = MPIDI_OFI_SOURCE_BITS_TOFU,
++     .tag_bits = MPIDI_OFI_TAG_BITS_TOFU,
++     .counter_wait_objects = MPIDI_OFI_COUNTER_WAIT_OBJECTS_TOFU,
++     .major_version = MPIDI_OFI_MAJOR_VERSION_MINIMAL,
++     .minor_version = MPIDI_OFI_MINOR_VERSION_MINIMAL}
+ };
+diff --git a/src/mpid/ch4/netmod/ofi/ofi_capability_sets.h b/src/mpid/ch4/netmod/ofi/ofi_capability_sets.h
+index 4262e24c7..4c57bc11f 100644
+--- a/src/mpid/ch4/netmod/ofi/ofi_capability_sets.h
++++ b/src/mpid/ch4/netmod/ofi/ofi_capability_sets.h
+@@ -29,6 +29,7 @@ enum {
+     MPIDI_OFI_SET_NUMBER_VERBS_RXM,
+     MPIDI_OFI_SET_NUMBER_RXM,
+     MPIDI_OFI_SET_NUMBER_GNI,
++    MPIDI_OFI_SET_NUMBER_TOFU,		// TOFU
+     MPIDI_OFI_NUM_SETS
+ };
+ 
+@@ -63,6 +64,8 @@ MPL_STATIC_INLINE_PREFIX int MPIDI_OFI_get_set_number(const char *set_name)
+         return MPIDI_OFI_SET_NUMBER_GNI;
+     } else if (!strcmp(MPIDI_OFI_SET_NAME_MINIMAL, set_name)) {
+         return MPIDI_OFI_SET_NUMBER_MINIMAL;
++    } else if (!strcmp("tofu", set_name)) {	// TOFU
++        return MPIDI_OFI_SET_NUMBER_TOFU;	// TOFU
+     } else {
+         return MPIDI_OFI_SET_NUMBER_DEFAULT;
+     }
+@@ -738,6 +741,79 @@ MPL_STATIC_INLINE_PREFIX int MPIDI_OFI_get_set_number(const char *set_name)
+ #define MPIDI_OFI_MAJOR_VERSION_MINIMAL             FI_MAJOR_VERSION
+ #define MPIDI_OFI_MINOR_VERSION_MINIMAL             FI_MINOR_VERSION
+ 
++/* TOFU */
++#define MPIDI_OFI_ENABLE_AV_TABLE_TOFU           MPIDI_OFI_OFF	/* changed */
++#define MPIDI_OFI_ENABLE_SCALABLE_ENDPOINTS_TOFU MPIDI_OFI_ON
++#define MPIDI_OFI_MAX_ENDPOINTS_TOFU             MPIDI_OFI_MAX_ENDPOINTS_SCALABLE
++#define MPIDI_OFI_MAX_ENDPOINTS_BITS_TOFU        MPIDI_OFI_MAX_ENDPOINTS_BITS_SCALABLE
++#define MPIDI_OFI_ENABLE_SHARED_CONTEXTS_TOFU    MPIDI_OFI_OFF	/* changed */
++#define MPIDI_OFI_ENABLE_MR_VIRT_ADDRESS_TOFU    MPIDI_OFI_ON
++#define MPIDI_OFI_ENABLE_MR_ALLOCATED_TOFU       MPIDI_OFI_OFF
++#define MPIDI_OFI_ENABLE_MR_PROV_KEY_TOFU        MPIDI_OFI_ON	/* changed */
++#define MPIDI_OFI_ENABLE_MR_REGISTER_NULL_TOFU   MPIDI_OFI_ON
++//#define MPIDI_OFI_ENABLE_TAGGED_TOFU             MPIDI_OFI_ON
++#define MPIDI_OFI_ENABLE_RMA_TOFU                MPIDI_OFI_ON
++//#define MPIDI_OFI_ENABLE_AM_TOFU                 MPIDI_OFI_ON
++#define MPIDI_OFI_ENABLE_TAGGED_TOFU             MPIDI_OFI_global.settings.enable_tagged
++#define MPIDI_OFI_ENABLE_TAGGED_TOFU_INIT        MPIDI_OFI_ON
++#define MPIDI_OFI_ENABLE_AM_TOFU                 MPIDI_OFI_ON
++#define MPIDI_OFI_ENABLE_ATOMICS_TOFU           MPIDI_OFI_OFF
++#define MPIDI_OFI_FETCH_ATOMIC_IOVECS_TOFU       1
++#define MPIDI_OFI_ENABLE_DATA_AUTO_PROGRESS_TOFU MPIDI_OFI_OFF
++#define MPIDI_OFI_ENABLE_CONTROL_AUTO_PROGRESS_TOFU  MPIDI_OFI_OFF
++#define MPIDI_OFI_ENABLE_PT2PT_NOPACK_TOFU       MPIDI_OFI_ON
++#define MPIDI_OFI_ENABLE_HMEM_TOFU               MPIDI_OFI_OFF
++#define MPIDI_OFI_NUM_AM_BUFFERS_TOFU            MPIDI_OFI_MAX_NUM_AM_BUFFERS
++#define MPIDI_OFI_NUM_OPTIMIZED_MEMORY_REGIONS_TOFU (0)
++#define MPIDI_OFI_CONTEXT_BITS_TOFU              (20)
++#define MPIDI_OFI_SOURCE_BITS_TOFU               (0)
++#define MPIDI_OFI_TAG_BITS_TOFU                  (31)
++#define MPIDI_OFI_COUNTER_WAIT_OBJECTS_TOFU      MPIDI_OFI_ON
++#define MPIDI_OFI_MAJOR_VERSION_TOFU             1
++#define MPIDI_OFI_MINOR_VERSION_TOFU             7
++
++#ifdef MPIDI_CH4_OFI_USE_SET_TOFU
++#define MPIDI_OFI_SET_NUMBER                MPIDI_OFI_SET_NUMBER_TOFU
++#define MPIDI_OFI_ENABLE_AV_TABLE           MPIDI_OFI_ENABLE_AV_TABLE_TOFU
++#define MPIDI_OFI_ENABLE_SCALABLE_ENDPOINTS MPIDI_OFI_ENABLE_SCALABLE_ENDPOINTS_TOFU
++#define MPIDI_OFI_MAX_ENDPOINTS             MPIDI_OFI_MAX_ENDPOINTS_TOFU
++#define MPIDI_OFI_MAX_ENDPOINTS_BITS        MPIDI_OFI_MAX_ENDPOINTS_BITS_TOFU
++#define MPIDI_OFI_ENABLE_SHARED_CONTEXTS    MPIDI_OFI_global.settings.enable_shared_contexts    /* Always controlled by CVAR */
++#define MPIDI_OFI_ENABLE_MR_VIRT_ADDRESS    MPIDI_OFI_ENABLE_MR_VIRT_ADDRESS_TOFU
++#define MPIDI_OFI_ENABLE_MR_ALLOCATED       MPIDI_OFI_ENABLE_MR_ALLOCATED_TOFU
++#define MPIDI_OFI_ENABLE_MR_PROV_KEY        MPIDI_OFI_ENABLE_MR_PROV_KEY_TOFU
++#define MPIDI_OFI_ENABLE_MR_REGISTER_NULL   MPIDI_OFI_ENABLE_MR_REGISTER_NULL_TOFU
++#define MPIDI_OFI_ENABLE_TAGGED             MPIDI_OFI_ENABLE_TAGGED_TOFU
++#define MPIDI_OFI_ENABLE_AM                 MPIDI_OFI_ENABLE_AM_TOFU
++#define MPIDI_OFI_ENABLE_RMA                MPIDI_OFI_ENABLE_RMA_TOFU
++#define MPIDI_OFI_ENABLE_ATOMICS            MPIDI_OFI_ENABLE_ATOMICS_TOFU
++#define MPIDI_OFI_FETCH_ATOMIC_IOVECS       MPIDI_OFI_FETCH_ATOMIC_IOVECS_TOFU
++#define MPIDI_OFI_ENABLE_DATA_AUTO_PROGRESS MPIDI_OFI_ENABLE_DATA_AUTO_PROGRESS_TOFU
++#define MPIDI_OFI_ENABLE_CONTROL_AUTO_PROGRESS  MPIDI_OFI_ENABLE_CONTROL_AUTO_PROGRESS_TOFU
++#define MPIDI_OFI_ENABLE_PT2PT_NOPACK       MPIDI_OFI_ENABLE_PT2PT_NOPACK_TOFU
++#define MPIDI_OFI_ENABLE_HMEM               MPIDI_OFI_ENABLE_HMEM_TOFU
++#define MPIDI_OFI_NUM_AM_BUFFERS            MPIDI_OFI_NUM_AM_BUFFERS_TOFU
++#define MPIDI_OFI_NUM_OPTIMIZED_MEMORY_REGIONS  MPIDI_OFI_NUM_OPTIMIZED_MEMORY_REGIONS_TOFU
++#define MPIDI_OFI_PROTOCOL_MASK             (0x00E0000000000000ULL)
++//#define MPIDI_OFI_CONTEXT_MASK              (0x0007FFFF80000000ULL)	/* 20201228 */
++#define MPIDI_OFI_CONTEXT_MASK              (0x000FFFFF00000000ULL)	/* 20210205 */
++#define MPIDI_OFI_SOURCE_MASK               (0x0000000000000000ULL)     /* Tofu does support immediate data
++                                                                         * so this field is zeroed */
++#define MPIDI_OFI_TAG_MASK                  (0x000000007FFFFFFFULL)
++#define MPIDI_OFI_CONTEXT_BITS              MPIDI_OFI_CONTEXT_BITS_TOFU
++#define MPIDI_OFI_SOURCE_BITS               MPIDI_OFI_SOURCE_BITS_TOFU
++#define MPIDI_OFI_TAG_BITS                  MPIDI_OFI_TAG_BITS_TOFU
++#define MPIDI_OFI_COUNTER_WAIT_OBJECTS      MPIDI_OFI_COUNTER_WAIT_OBJECTS_TOFU
++#define MPIDI_OFI_SYNC_SEND_ACK             (0x0010000000000000ULL)
++#define MPIDI_OFI_SYNC_SEND                 (0x0020000000000000ULL)
++#define MPIDI_OFI_DYNPROC_SEND              (0x0040000000000000ULL)
++#define MPIDI_OFI_HUGE_SEND                 (0x0080000000000000ULL)
++#define MPIDI_OFI_MAJOR_VERSION             MPIDI_OFI_MAJOR_VERSION_TOFU
++#define MPIDI_OFI_MINOR_VERSION             MPIDI_OFI_MINOR_VERSION_TOFU
++#define MPIDI_OFI_CONTEXT_STRUCTS           1
++#endif
++/* end of TOFU */
++
+ #ifdef MPIDI_CH4_OFI_USE_SET_RUNTIME
+ #define MPIDI_OFI_SET_NUMBER                MPIDI_OFI_SET_NUMBER_DEFAULT
+ #define MPIDI_OFI_ENABLE_RUNTIME_CHECKS     1
+diff --git a/src/mpid/ch4/netmod/ofi/ofi_types.h b/src/mpid/ch4/netmod/ofi/ofi_types.h
+index 9bd8c8652..eddf45b17 100644
+--- a/src/mpid/ch4/netmod/ofi/ofi_types.h
++++ b/src/mpid/ch4/netmod/ofi/ofi_types.h
+@@ -27,7 +27,7 @@
+ #define MPIDI_OFI_MAX_VNIS                  16
+ 
+ #define MPIDI_OFI_MAP_NOT_FOUND            ((void*)(-1UL))
+-#define MPIDI_OFI_DEFAULT_SHORT_SEND_SIZE  (16 * 1024)
++#define MPIDI_OFI_DEFAULT_SHORT_SEND_SIZE  (2 * 1024) /* 2023.09.01 metro tanaka: change size to 16->2  */
+ #define MPIDI_OFI_MAX_NUM_AM_BUFFERS       (8)
+ #define MPIDI_OFI_AM_BUFF_SZ               (1 * 1024 * 1024)
+ #define MPIDI_OFI_IOV_MAX                  (32)
+diff --git a/src/mpid/ch4/netmod/ofi/subconfigure.m4 b/src/mpid/ch4/netmod/ofi/subconfigure.m4
+index bc1761be6..36c4ae628 100644
+--- a/src/mpid/ch4/netmod/ofi/subconfigure.m4
++++ b/src/mpid/ch4/netmod/ofi/subconfigure.m4
+@@ -68,6 +68,7 @@ AM_COND_IF([BUILD_CH4_NETMOD_OFI],[
+         enable_mrail="no"
+         enable_efa="no"
+         enable_netdir="no"
++        enable_tofu="no"
+         enable_cxi="no"
+     else
+         enable_psm="yes"
+@@ -89,6 +90,7 @@ AM_COND_IF([BUILD_CH4_NETMOD_OFI],[
+         enable_mrail="yes"
+         enable_efa="yes"
+         enable_netdir="yes"
++        enable_tofu="yes"
+         enable_cxi="yes"
+     fi
+ 
+@@ -177,6 +179,10 @@ AM_COND_IF([BUILD_CH4_NETMOD_OFI],[
+                 enable_netdir="yes"
+                 runtime_capabilities="yes"
+                 ;;
++	    "tofu")
++		enable_tofu="yes"
++                runtime_capabilities="yes"
++		;;
+             *)
+                 AC_MSG_WARN("Invalid provider $provider")
+         esac
+@@ -210,6 +216,10 @@ AM_COND_IF([BUILD_CH4_NETMOD_OFI],[
+                 AC_DEFINE([MPIDI_CH4_OFI_USE_SET_BGQ], [1], [Define to use bgq capability set])
+                 enable_bgq="yes"
+                 ;;
++            "tofu")
++                AC_DEFINE([MPIDI_CH4_OFI_USE_SET_RUNTIME], [1], [Define to use runtime capability set])
++                enable_tofu="yes"
++                ;;
+             "verbs")
+                 AC_DEFINE([MPIDI_CH4_OFI_USE_SET_RUNTIME], [1], [Define to use runtime capability set])
+                 enable_verbs="yes"
+@@ -305,6 +315,7 @@ AM_COND_IF([BUILD_CH4_NETMOD_OFI],[
+             prov_config="$prov_config --enable-mrail=${enable_mrail}"
+             prov_config="$prov_config --enable-efa=${enable_efa}"
+             prov_config="$prov_config --enable-netdir=${enable_netdir}"
++            prov_config="$prov_config --enable-tofu=${enable_tofu}"
+             prov_config="$prov_config --enable-cxi=${enable_cxi}"
+         fi
+ 
+diff --git a/src/mpid/ch4/src/ch4_coll_impl.h b/src/mpid/ch4/src/ch4_coll_impl.h
+index 780c79433..3d1897a5f 100644
+--- a/src/mpid/ch4/src/ch4_coll_impl.h
++++ b/src/mpid/ch4/src/ch4_coll_impl.h
+@@ -673,16 +673,33 @@ MPL_STATIC_INLINE_PREFIX int MPIDI_Reduce_intra_composition_alpha(const void *se
+         }
+         /* recvbuf becomes the sendbuf for internode reduce */
+         inter_sendbuf = recvbuf;
++	// fprintf(stderr, "YI %s inter_sendbuf = recvbuf = %p\n", __func__, recvbuf);
+     } else {
+         inter_sendbuf = (sendbuf == MPI_IN_PLACE) ? recvbuf : sendbuf;
++	// fprintf(stderr, "YI %s inter_sendbuf = %p\n", __func__, inter_sendbuf);
+     }
+ 
+     /* internode reduce with rank 0 in node_roots_comm as the root */
+     if (comm->node_roots_comm != NULL) {
++//#define TOFU 20201230 checking again
++#ifdef TOFU_COLL
++	fprintf(stderr, "YI CHANGED %s ==> calling MPIDI_NM_mpi_reduce comm->node_roots_comm->rank(%d) in %s\n", __func__, comm->node_roots_comm->rank, __FILE__);
++	if (inter_sendbuf == recvbuf && comm->node_roots_comm->rank == 0) {
++	    mpi_errno =
++		MPIDI_NM_mpi_reduce(MPI_IN_PLACE,
++                                recvbuf, count, datatype, op, 0, comm->node_roots_comm, errflag);
++	} else {
++	    mpi_errno =
++		MPIDI_NM_mpi_reduce(inter_sendbuf,
++                                recvbuf, count, datatype, op, 0, comm->node_roots_comm, errflag);
++	}
++	// fprintf(stderr, "YI %s <== return from MPIDI_NM_mpi_reduce\n", __func__);
++#else
+         mpi_errno =
+             MPIDI_NM_mpi_reduce(comm->node_roots_comm->rank == 0 ? MPI_IN_PLACE : inter_sendbuf,
+                                 recvbuf, count, datatype, op, 0, comm->node_roots_comm, errflag);
+ 
++#endif
+         if (mpi_errno) {
+             /* for communication errors, just record the error but continue */
+             *errflag =
+diff --git a/maint/patches/optional/confdb/f77.patch b/maint/patches/optional/confdb/f77.patch
+new file mode 100644
+index 000000000..f2ca8ac15
+--- /dev/null
++++ b/maint/patches/optional/confdb/f77.patch
+@@ -0,0 +1,18 @@
++--- libtool.m4.org	2021-03-03 16:21:54.800529915 +0900
+++++ libtool.m4	2021-03-03 16:29:34.959297925 +0900
++@@ -6291,6 +6291,7 @@
++ ## the running order or otherwise move them around unless you know exactly
++ ## what you are doing...
++ if test -n "$compiler"; then
+++  _LT_SYS_HIDDEN_LIBDEPS($1)
++   _LT_COMPILER_NO_RTTI($1)
++   _LT_COMPILER_PIC($1)
++   _LT_COMPILER_C_O($1)
++@@ -7829,6 +7830,7 @@
++     ## There is no encapsulation within the following macros, do not change
++     ## the running order or otherwise move them around unless you know exactly
++     ## what you are doing...
+++    _LT_SYS_HIDDEN_LIBDEPS($1)
++     _LT_COMPILER_PIC($1)
++     _LT_COMPILER_C_O($1)
++     _LT_COMPILER_FILE_LOCKS($1)
+diff --git a/maint/patches/optional/confdb/fujitsu.patch b/maint/patches/optional/confdb/fujitsu.patch
+new file mode 100644
+index 000000000..236da4ed5
+--- /dev/null
++++ b/maint/patches/optional/confdb/fujitsu.patch
+@@ -0,0 +1,78 @@
++--- libtool.m4.org     2021-04-26 09:28:18.000000000 +0900
+++++ libtool.m4 2021-04-26 10:00:23.000000000 +0900
++@@ -4285,6 +4285,12 @@
++       _LT_TAGVAR(lt_prog_compiler_pic, $1)='-fPIC'
++       ;;
++     esac
+++    case $cc_basename in
+++    fcc* | FCC* | frt*)
+++      _LT_TAGVAR(lt_prog_compiler_pic, $1)='-KPIC'
+++      _LT_TAGVAR(lt_prog_compiler_wl, $1)='-Wl,'
+++      ;;
+++    esac
++   else
++     case $host_os in
++       aix[[4-9]]*)
++@@ -4405,6 +4411,10 @@
++	    _LT_TAGVAR(lt_prog_compiler_pic, $1)='-qpic'
++	    _LT_TAGVAR(lt_prog_compiler_static, $1)='-qstaticlink'
++	    ;;
+++         fcc* | FCC* | frt*)
+++           _LT_TAGVAR(lt_prog_compiler_wl, $1)='-Wl,'
+++           _LT_TAGVAR(lt_prog_compiler_pic, $1)='-Kpic'
+++           ;;
++	  *)
++	    case `$CC -V 2>&1 | sed 5q` in
++	    *Sun\ C*)
++@@ -4628,6 +4638,10 @@
++         _LT_TAGVAR(lt_prog_compiler_pic, $1)="-Xcompiler $_LT_TAGVAR(lt_prog_compiler_pic, $1)"
++       fi
++       ;;
+++    fcc* | FCC* | frt*)
+++      _LT_TAGVAR(lt_prog_compiler_wl, $1)='-Wl,'
+++      _LT_TAGVAR(lt_prog_compiler_pic, $1)='-KPIC'
+++     ;;
++     esac
++   else
++     # PORTME Check for flag to pass linker flags through the system compiler.
++@@ -4750,6 +4764,10 @@
++         # ARM LLVM C/C++/Fortran
++         _LT_TAGVAR(lt_prog_compiler_wl, $1)='-Wl,'
++         ;;
+++      fcc* | FCC* | frt*)
+++        _LT_TAGVAR(lt_prog_compiler_wl, $1)='-Wl,'
+++        _LT_TAGVAR(lt_prog_compiler_pic, $1)='-KPIC'
+++      ;;
++       *)
++       case `$CC -V 2>&1 | sed 5q` in
++       *Sun\ Ceres\ Fortran* | *Sun*Fortran*\ [[1-7]].* | *Sun*Fortran*\ 8.[[0-3]]*)
++@@ -6448,6 +6467,13 @@
++       # what "hidden" libraries, object files and flags are used when
++       # linking a shared library.
++       output_verbose_link_cmd='$CC -shared $CFLAGS -v conftest.$objext 2>&1 | $GREP -v "^Configured with:" | $GREP "\-L"'
+++      case $cc_basename in
+++      fcc* | FCC* | frt*)
+++         output_verbose_link_cmd='$CC -shared -Knolargepage $CFLAGS -v conftest.$objext 2>&1 | $GREP -v "^Configured with:" | $GREP "\-L"'
+++         _LT_TAGVAR(archive_cmds, $1)='$CC -shared -Knolargepage $libobjs $deplibs $compiler_flags -Wl,-soname -Wl,$soname -o $lib'
+++          _LT_TAGVAR(archive_expsym_cmds, $1)='$CC -shared -Knolargepage $libobjs $deplibs $compiler_flags -Wl,-soname -Wl,$soname -Wl,-retain-symbols-file -Wl,$export_symbols -o $lib'
+++         ;;
+++      esac
++
++     else
++       GXX=no
++@@ -7917,6 +7945,15 @@
++         esac
++       fi
++         ;;
+++      linux* | k*bsd*-gnu | kopensolaris*-gnu | gnu*)
+++        case $cc_basename in
+++        fcc* | FCC* | frt*)
+++          output_verbose_link_cmd='$CC -Knolargepage $CFLAGS -v conftest.$objext 2>&1 | $GREP -v "^Configured with:" | $GREP "\-L"'
+++         archive_cmds='$CC -shared -Knolargepage $libobjs $deplibs $compiler_flags -Wl,-soname -Wl,$soname -o $lib'
+++          archive_expsym_cmds='$CC -shared -Knolargepage $libobjs $deplibs $compiler_flags -Wl,-soname -Wl,$soname -Wl,-retain-symbols-file -Wl,$export_symbols -o $lib'
+++          ;;
+++        esac
+++        ;;
++     esac
++     AC_MSG_RESULT([$enable_shared])
++
